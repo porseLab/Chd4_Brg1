@@ -1,5 +1,5 @@
 ---
-title: "R Notebook for Chd4 and Brg1 project"
+title: "R Notebook for Chd4 and Brg1 project (author: sachin pundhir)"
 output:
   pdf_document: default
   html_notebook: default
