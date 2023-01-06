@@ -1515,9 +1515,6 @@ pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/histone_variants/hi
 ggarrange(p1, p2, p3, p4, nrow=2, ncol=2, labels = c("A) H2A.Z (CHD4)", "B) H2A.Z (CHD4)", "C) H3.3 (BRG1)", "D) H3.3 (BRG1)"))
 dev.off()
 
-# #####################
-# ## Chd4
-# #####################
 ## PCA plots
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/pca_histone_variants.pdf")
 df <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/histone_variants/brg1_h3v3_replicates_multiBigwigSummary.bedSignal", header=T)
