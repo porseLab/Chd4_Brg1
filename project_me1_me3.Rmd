@@ -427,7 +427,6 @@ test$ep400_cluster <- cut2(test$pol2_esc_wt_Rep1, m=25)
 test$gene_length <- log(test$gene_length)
 
 test.melt <- melt(summaryBy(chd4_fc ~ ep400_cluster + promoter_class_merged, data = test, FUN = list(median)))
-#barplot(test.melt[order(test.melt$promoter_class_merged, test.melt$ep400_cluster),]$value)
 p1 <- ggplot(test.melt, aes(ep400_cluster, variable, fill=value)) + geom_tile() + 
   scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(5, "RdBu"), bias=0.55)(56))) +
   facet_grid(.~ promoter_class_merged ) +
@@ -488,8 +487,6 @@ pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/cor_chd4_mbd3_expr_fc.pd
 test.melt <- summaryBy(chd4_fc +  mbd3_fc ~ ep400_cluster, data = test, FUN = list(median))
 smoothScatter(test.melt$chd4_fc.median, test.melt$mbd3_fc.median, colramp=colorRampPalette(my.cols), pch=19, cex=.8, useRaster=T, xlab = "chd4 (logFC)", ylab = "mbd3 (logFC)")
 lines(lowess(test.melt$chd4_fc.median, test.melt$mbd3_fc.median),col='red', lty="dashed")
-# # reg<-lm(chd4_fc.median ~ mbd3_fc.median, data = test.melt)
-# # abline(reg, col="red", lty="dashed")
 cor.test(test.melt$chd4_fc.median, test.melt$mbd3_fc.median, method="spearman")
 
 test$atac_fc_brg1KD <- log(test$atac_esc_brg1_kd/test$atac_esc_wt)
@@ -499,26 +496,6 @@ smoothScatter(test.melt$atac_fc_chd4KD.median, test.melt$atac_fc_brg1KD.median, 
 lines(lowess(test.melt$atac_fc_chd4KD.median, test.melt$atac_fc_brg1KD.median),col='red', lty="dashed")
 cor(test.melt$atac_fc_chd4KD.median, test.melt$atac_fc_brg1KD.median, method="spearman")
 dev.off()
-
-##----------------------------------------------------##
-## analysis to explain relationship with enhancers
-##----------------------------------------------------##
-
-# df.melt <- melt(gene_enzyme_enhancer[,c(155,139)])
-# ggplot(df.melt, aes(promoter_class_merged, log(value))) + geom_boxplot() + facet_grid(.~variable) + ylab("Brg1 at enhancers (log)")
-# df.melt <- melt(gene_enzyme_enhancer[,c(155,127,129)])
-# ggplot(df.melt, aes(variable, log(value))) + geom_boxplot() + facet_grid(.~promoter_class_merged) + ylab("H3K27ac at enhancers (log)") + theme(axis.text.x = element_text(size=10, angle=45))
-# df.melt <- melt(gene_enzyme_enhancer[,c(155,133,135)])
-# ggplot(df.melt, aes(variable, log(value))) + geom_boxplot() + facet_grid(.~promoter_class_merged) + ylab("H3K27me3 at enhancers (log)") + theme(axis.text.x = element_text(size=10, angle=45))
-# 
-# df.melt <- melt(gene_enzyme_enhancer[,c(155,16)])
-# ggplot(df.melt, aes(promoter_class_merged, log(value))) + geom_boxplot() + ylab("Brg1 at promoters (log)")
-# df.melt <- melt(gene_enzyme_enhancer[,c(155,147:150)])
-# ggplot(df.melt, aes(variable, log(value))) + geom_boxplot() + facet_grid(.~promoter_class_merged) + ylab("H3K27ac at promoters (log)") + theme(axis.text.x = element_text(size=10, angle=45))
-# df.melt <- melt(gene_enzyme_enhancer[,c(155,151:154)])
-# ggplot(df.melt, aes(variable, log(value))) + geom_boxplot() + facet_grid(.~promoter_class_merged) + ylab("H3K27me3 at promoters (log)") + theme(axis.text.x = element_text(size=10, angle=45))
-
-## ALSO CONSIDER ANALYZING FOR SUPER-ENHANCERS
 ```
 
 ##################################################
@@ -536,11 +513,10 @@ dirk_data <- dirk_data[match(unique(dirk_data$SYMBOL), dirk_data$SYMBOL),]
 dirk_data <- dirk_data[!is.na(dirk_data$SYMBOL),]
 dim(dirk_data)
 mat <- dirk_data[,c(5:6,11:12)]
-# mat <- dirk_data[,c(5:6,13:14)]
 row.names(mat) <- dirk_data$SYMBOL
 mat <- mat[which(rowMin(as.matrix(mat)) > 2),]
 res_dirk_data <- matrix2deseq2(mat, "wt,wt,ko,ko")
-# res_dirk_data <- matrix2edgeR(mat, "1,1,2,2")
+
 ## sanity check
 # ggplot(res_dirk_data, aes(log2FoldChange, -log10(padj), color=class)) + geom_point() + theme_bw()
 # dirk_data_analyzed <- merge(dirk_data, res_dirk_data[,c("gene", "log2FoldChange", "class")], by.x="SYMBOL", by.y="gene")
@@ -553,12 +529,9 @@ res_dirk_data <- matrix2deseq2(mat, "wt,wt,ko,ko")
 # ggline(df.melt, x="variable", y="value", add="mean_se", facet.by = "class") +
 #   theme(axis.text.x = element_text(size=10, angle=45)) + xlab("")
 
-# res_dirk_data <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/old/dirk.bed", header=T)
-# test <- merge(res_dirk_data, gene_enzyme_enhancer[,c(4,61,75,87,132,134,164,165)], by.x="gene", by.y="gene")
 test <- merge(res_dirk_data, df_esc[,c("name", "pol2_esc_wt_Rep1", "brg1_fc", "chd4_fc", "ep400_cluster_merged")], by.x="gene", by.y="name")
 test <- merge(test, dirk_data[,c("SYMBOL", "mean_expr_wt")], by.x="gene", by.y="SYMBOL")
 test$expr_class <- cut2(test$mean_expr_wt, g=3)
-# freqPlot(melt(table(test[,c("expr_class", "class")])), "density")
 test$ep400_cluster_merged <- factor(test$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"), ordered=T)
 test$class <- factor(test$class, levels=c("neutral", "down", "up"), ordered=T)
 
@@ -582,29 +555,15 @@ p1.2 <- freqPlot(melt(table(test[which(test$class!="neutral"),c("ep400_cluster_m
 ##----------------------------------------------------##
 ## validation with Mbd4 KD data
 ##----------------------------------------------------##
-# df <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_esc/allGenes_transcriptSignal.bed", header=T)
-
-## organize matrix
-# mat <- t(apply(df[,c(23:ncol(df))], 1, function(x) as.numeric(gsub("^.*/", "", x)) + as.numeric(gsub("/.*$", "", x))))
-# # mat <- t(apply(df[,c(23:ncol(df))], 1, function(x) as.numeric(gsub("/.*$", "", x))))
-# row.names(mat) <- df$name
-# mat <- mat[which(rowMin(mat) > 2),]
-# colnames(mat) <- colnames(df[,c(23:ncol(df))])
-# res.chd4 <- matrix2deseq2(mat[,c(2:3,5:6)], "ko,ko,wt,wt", cutoff = 0.05)
-# # res.chd4 <- matrix2edgeR(mat[,c(2:3,5:6)], "2,2,1,1")
-
 df <- read.table("/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/gro-seq/mouse/mef_esc_reprogramming/mbd3_kd/GENE_EXPRESSION.MATRIX", header=T)
 mat <- df[,c(9:14)]
 row.names(mat) <- df$name
 mat <- mat[which(row.names(mat) %in% dirk_data$SYMBOL),]
 res.chd4 <- matrix2deseq2(mat[,c(2:3,5:6)], "ko,ko,wt,wt", cutoff = 0.05)
-# ggplot(res.chd4, aes(log2FoldChange, -log10(padj), color=class)) + geom_point() + theme_bw()
 
-# test <- merge(res.chd4, gene_enzyme_enhancer[,c(4,10,61,75,87,132,134,164,165)], by.x="gene", by.y="gene")
 test <- merge(res.chd4, df_esc[,c("name", "pol2_esc_wt_Rep1", "brg1_fc", "chd4_fc", "ep400_cluster_merged")], by.x="gene", by.y="name")
 test$ep400_cluster_merged <- factor(test$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"), ordered=T)
 
-# freqPlot(melt(table(test[,c("ep400_cluster_merged", "class")])), "density")
 p2 <- ggboxplot(test[which(test$pvalue<0.05),], x = "ep400_cluster_merged", y = "log2FoldChange", fill = "gray", notch=0, notchwidth = 0.6,
           yscale="none", legend="none", title="Mbd3 0h vs 24h", outlier.shape=NA) + xlab("Gene classes defined in our study") +  
   ylab("log2FC in expr. (Mbd3)") +
@@ -625,11 +584,6 @@ tmp[which(tmp$log2FoldChange < 0 & tmp$pvalue < 0.05),]$class <- "down"
 table(tmp$class)
 p2.2 <- freqPlot(melt(table(tmp[which(tmp$class!="neutral"),c("ep400_cluster_merged", "class")])), "density")
 
-# ggplot(test, aes(chd4_fc, log2FoldChange)) + geom_point(aes(color=class)) + theme_bw() +
-#   geom_smooth(method = "lm", formula = y ~ poly(x, 1), se = F)  + geom_hline(yintercept = 0) + geom_vline(xintercept = 0) +
-#   scale_color_manual(values=c("#2b8cbe", "#f0f0f0", "#de2d26")) + xlab("logFC in expr. (shRNA Chd4)") +
-#   ylab("log2FC in expr. (inhibitor Brg1; 3hr vs DMSO)")
-# cor(test$chd4_fc, test$log2FoldChange, method = "pearson", use="complete.obs")
 g <- ggarrange(p1, p1.1, p1.2, p2, p2.1, p2.2, nrow=2, ncol=3, labels=c("A", "B", "C", "D", "E", "F"))
 ggsave(g, dpi=300, filename="~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/external_validation.pdf", useDingbats=FALSE)
 
@@ -637,14 +591,11 @@ df <- merge(res_dirk_data[,c("gene", "log2FoldChange")], res.chd4[,c("gene", "lo
 colnames(df) <- c("gene", "log2FoldChange_brg1", "log2FoldChange_mbd3")
 df <- merge(df, df_esc[,c("name", "pol2_esc_wt_Rep1")], by.x="gene", by.y="name")
 df$class <- cut2(df$pol2_esc_wt_Rep1, m=1)
-# plot(df$log2FoldChange_brg1, df$log2FoldChange_mbd3)
 test.melt <- summaryBy(log2FoldChange_brg1 +  log2FoldChange_mbd3 ~ class, data = df, FUN = list(median))
 ggscatter(test.melt, x = "log2FoldChange_brg1.median", y = "log2FoldChange_mbd3.median", color="#636363", alpha=0.6, 
           add = "loess", conf.int = TRUE) + stat_cor(label.x = 0, method="spearman") +
   geom_hline(yintercept = 0, lty=2) +
   geom_vline(xintercept = 0, lty=2)
-
-# freqPlot(melt(table(df_esc[which(df_esc$chd1_class!="neutral"),c("ep400_cluster_merged", "chd1_class")])), "density")
 ```
 
 ##################################################
@@ -652,7 +603,6 @@ ggscatter(test.melt, x = "log2FoldChange_brg1.median", y = "log2FoldChange_mbd3.
 ##################################################
 ```{r}
 test <- df_esc
-# test[which(test$pol2_TSSR < 1 | test$dist_closest_tss < 3000),c(171:186)] <- NA
 test$pausing_brg1_wt <- rowMeans(test[,c("pausing_pol2_brg1_wt_Rep1", "pausing_pol2_brg1_wt_Rep2")])
 test$pausing_brg1_ko <- rowMeans(test[,c("pausing_pol2_brg1_ko_Rep1", "pausing_pol2_brg1_ko_Rep2")])
 test$pausing_mbd3_wt <- rowMeans(test[,c("pausing_pol2S5P_esc_mbd3_24h_Rep2", "pausing_pol2S5P_esc_mbd3_24h_Rep3")])
@@ -662,21 +612,13 @@ test$pausing_wt <- rowMeans(test[,c("pausing_pol2_esc_wt_Rep1", "pausing_pol2_es
 test$pausing_brg1_kd <- rowMeans(test[,c("pausing_pol2_esc_brg1_kd_Rep1", "pausing_pol2_esc_brg1_kd_Rep2")])
 test$pausing_chd4_kd <- rowMeans(test[,c("pausing_pol2_esc_chd4_kd_Rep1", "pausing_pol2_esc_chd4_kd_Rep2")])
 
-#test$ratio_chd4_brg1 <- cut2(log2((test$chd4)/(test$brg1)), m=25)
 test$ratio_chd4_brg1 <- cut2((test$chd4_esc_Rep1+1)/(test$brg1_esc_Rep1+1), m=25)
 test$ep400_cluster_merged_col <- "red"
 test[which(test$ep400_cluster_merged=="low"),]$ep400_cluster_merged_col <- "green"
 test[which(test$ep400_cluster_merged=="average"),]$ep400_cluster_merged_col <- "blue"
 test[which(test$ep400_cluster_merged=="high"),]$ep400_cluster_merged_col <- "yellow"
 
-# test[,c("pol2_ser2p", "pol2_ser5p")] <- normalize.quantiles(as.matrix(test[,c("pol2_ser2p", "pol2_ser5p")]))
-# test$ratio_ser2p_ser5p <- test$pol2_ser2p/test$pol2_ser5p
 test$ratio_ser2p_ser5p <- as.numeric(normalize.quantiles(as.matrix(test$pol2_esc_ser2p_Rep1))/normalize.quantiles(as.matrix(test$pol2_esc_ser5p_Rep1)))
-# test$ratio_ser5p_wt <- as.numeric(normalize.quantiles(as.matrix(test$pol2_ser5p))/normalize.quantiles(as.matrix(test$pol2_wt)))
-# test$ratio_ser2p_wt <- as.numeric(normalize.quantiles(as.matrix(test$pol2_ser2p))/normalize.quantiles(as.matrix(test$pol2_wt)))
-
-# test[grep("^Cdk1$", test$name),c("pausing_pol2_brg1_wt_Rep1", "pausing_pol2_brg1_ko_Rep1")]
-# test[grep("^Cdk1$", test$name),c("pausing_mbd3_wt", "pausing_mbd3_ko")]
 
 test <- test[order(test$ratio_chd4_brg1),]
 
@@ -691,7 +633,6 @@ test.ep400$pause_class <- cut2(test.ep400$pol2_fc_gb_Brg1_rep1, m=1500)
 table(test.ep400$pause_class)
 
 brg1 <- test.ep400[which(test.ep400$pause_class=="[ 0.4466, 2.4844]"),]
-# test.ep400$pause_class <- cut2((test.ep400$h2az / test.ep400$h3v3), m=1500)
 test.melt <- melt(test.ep400[,c("pause_class", "pausing_brg1_wt", "pausing_brg1_ko")])
 ggboxplot(test.melt, x = "variable", y = "value", add = "mean_se") +
   stat_compare_means(comparisons = list(c("pausing_brg1_ko", "pausing_brg1_wt"))) + facet_wrap(.~pause_class)
@@ -766,11 +707,6 @@ dev.off()
 ##----------------------------------------------------##
 
 groseq_esc <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_esc/allGenes_transcriptSignal.bed", header=T)
-# colnames(groseq_esc) <- c("chr", "start", "end", "gene", "score", "strand", "id", "TSSR", "pol2_TSSR", "dist_closest_tss",
-#                   "groseq_wt_rep1", "groseq_wt_rep2",
-#                   "cage_wt_rep1", "cage_wt_rep2", "cage_rrp40_rep1", "cage_rrp40_rep2", "cage_rbm7_rep1", "cage_rbm7_rep2",
-#                   "proseq_wt_rep1", "proseq_wt_rep2", "proseq_rrp40_rep1", "proseq_rrp40_rep2", "proseq_rbm7_rep1", "proseq_rbm7_rep2",
-#                   "nasseq_wt_rep1", "nasseq_wt_rep2", "nasseq_wt_rep3", "nasseq_kd_rep1", "nasseq_kd_rep2", "nasseq_kd_rep3")
 transcript_width <- (groseq_esc$end - groseq_esc$start)
 # groseq_esc <- groseq_esc[which(groseq_esc$dist_closest_tss > 3000),]
 tssr <- t(apply(groseq_esc[,c("groseq_esc_Rep1", "groseq_esc_Rep2")], 1, function(x) as.numeric(gsub("/.*$", "", x))))
@@ -778,11 +714,6 @@ colnames(tssr) <- c("groseq_tssr_rep1", "groseq_tssr_rep2")
 gb <- t(apply(groseq_esc[,c("groseq_esc_Rep1", "groseq_esc_Rep2")], 1, function(x) as.numeric(gsub("^.*/", "", x))))
 colnames(gb) <- c("groseq_gb_rep1", "groseq_gb_rep2")
 groseq_esc <- cbind(groseq_esc[,c(4),drop=F], tssr, gb)
-
-# groseq_esc$groseq_tssr_rep1_norm <- (groseq_esc$groseq_tssr_rep1/350)/((groseq_esc$groseq_tssr_rep1/350)+(groseq_esc$groseq_gb_rep1/transcript_width))
-# groseq_esc$groseq_tssr_rep2_norm <- (groseq_esc$groseq_tssr_rep2/350)/((groseq_esc$groseq_tssr_rep2/350)+(groseq_esc$groseq_gb_rep2/transcript_width))
-# groseq_esc$groseq_gb_rep1_norm <- (groseq_esc$groseq_gb_rep1/350)/((groseq_esc$groseq_tssr_rep1/350)+(groseq_esc$groseq_gb_rep1/transcript_width))
-# groseq_esc$groseq_gb_rep2_norm <- (groseq_esc$groseq_gb_rep2/350)/((groseq_esc$groseq_tssr_rep2/350)+(groseq_esc$groseq_gb_rep2/transcript_width))
 
 groseq_esc$groseq_tssr_rep1_norm <- groseq_esc$groseq_tssr_rep1/(groseq_esc$groseq_tssr_rep1+groseq_esc$groseq_gb_rep1)
 groseq_esc$groseq_tssr_rep2_norm <- groseq_esc$groseq_tssr_rep2/(groseq_esc$groseq_tssr_rep2+groseq_esc$groseq_gb_rep2)
@@ -794,20 +725,9 @@ test$ratio_chd4_brg1 <- cut2((test$chd4_esc_Rep1+1)/(test$brg1_esc_Rep1+1), m=25
 test$ep400_cluster <- cut2(test$groseq_tssr_rep2, m=25)
 
 test.ep400 <- test[which(test$ep400_cluster_merged=="high" | test$ep400_cluster_merged=="average"),]
-# test.ep400[,c("groseq_tssr_rep1", "groseq_tssr_rep2", "groseq_gb_rep1", "groseq_gb_rep2")] <- normalize.quantiles(as.matrix(test.ep400[,c("groseq_tssr_rep1", "groseq_tssr_rep2", "groseq_gb_rep1", "groseq_gb_rep2")]))
-# test.ep400$groseq_wt_rep1_pausing <- test.ep400$groseq_tssr_rep1/(test.ep400$groseq_tssr_rep1 + test.ep400$groseq_gb_rep1)
-# test.ep400$groseq_wt_rep2_pausing <- test.ep400$groseq_tssr_rep2/(test.ep400$groseq_tssr_rep2 + test.ep400$groseq_gb_rep2)
-# 
-# test.melt <- melt(summaryBy(groseq_wt_rep1_pausing + groseq_wt_rep2_pausing ~ ratio_chd4_brg1, data = test.ep400, FUN = list(median)))
-# ggplot(test.melt, aes(ratio_chd4_brg1, variable, fill=log(value))) + geom_tile() +
-#  scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(11, "RdBu"), bias=1)(256))) +
-#  theme(axis.text.x = element_blank())
 
 ## Pol2 pausing is not possible below a certain level of gene expression
 ## Pol2 pausing formula can thus give a false sense of high pausing for many low expressed genes
-# par(mfrow=c(2,1))
-# plot(groseq_esc$groseq_tssr_rep2_norm, log(groseq_esc$groseq_tssr_rep2))
-# plot(test.ep400$groseq_tssr_rep2_norm, log(test.ep400$groseq_tssr_rep2))
 
 test.melt <- summaryBy(h2az_esc_Rep1 + h3v3_esc_Rep1 + groseq_tssr_rep1 + groseq_tssr_rep2 + pol2_esc_ser5p_Rep1 + pol2_esc_ser2p_Rep1 +
                          groseq_tssr_rep1_norm + groseq_tssr_rep2_norm + groseq_gb_rep1_norm + groseq_gb_rep2_norm + 
@@ -842,11 +762,6 @@ dev.off()
 ##----------------------------------------------------##
 
 groseq_mef <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_mef/allGenes_transcriptSignal.bed", header=T)
-# colnames(groseq_mef) <- c("chr", "start", "end", "gene", "score", "strand", "id", "TSSR", "pol2_TSSR", "dist_closest_tss",
-#                   "groseq_wt_rep1", "groseq_wt_rep2",
-#                   "cage_wt_rep1", "cage_wt_rep2", "cage_rrp40_rep1", "cage_rrp40_rep2", "cage_rbm7_rep1", "cage_rbm7_rep2",
-#                   "proseq_wt_rep1", "proseq_wt_rep2", "proseq_rrp40_rep1", "proseq_rrp40_rep2", "proseq_rbm7_rep1", "proseq_rbm7_rep2",
-#                   "nasseq_wt_rep1", "nasseq_wt_rep2", "nasseq_wt_rep3", "nasseq_kd_rep1", "nasseq_kd_rep2", "nasseq_kd_rep3")
 transcript_width <- (groseq_mef$end - groseq_mef$start)
 # groseq_mef <- groseq_mef[which(groseq_mef$dist_closest_tss > 3000),]
 tssr <- t(apply(groseq_mef[,c("groseq_mef_Rep1", "groseq_mef_Rep2", "groseq_mef_Rep3")], 1, function(x) as.numeric(gsub("/.*$", "", x))))
@@ -854,11 +769,6 @@ colnames(tssr) <- c("groseq_tssr_rep1", "groseq_tssr_rep2", "groseq_tssr_rep3")
 gb <- t(apply(groseq_mef[,c("groseq_mef_Rep1", "groseq_mef_Rep2", "groseq_mef_Rep3")], 1, function(x) as.numeric(gsub("^.*/", "", x))))
 colnames(gb) <- c("groseq_gb_rep1", "groseq_gb_rep2", "groseq_gb_rep3")
 groseq_mef <- cbind(groseq_mef[,c(4),drop=F], tssr, gb)
-
-# groseq_mef$groseq_tssr_rep1_norm <- (groseq_mef$groseq_tssr_rep1/350)/((groseq_mef$groseq_tssr_rep1/350)+(groseq_mef$groseq_gb_rep1/transcript_width))
-# groseq_mef$groseq_tssr_rep2_norm <- (groseq_mef$groseq_tssr_rep2/350)/((groseq_mef$groseq_tssr_rep2/350)+(groseq_mef$groseq_gb_rep2/transcript_width))
-# groseq_mef$groseq_gb_rep1_norm <- (groseq_mef$groseq_gb_rep1/350)/((groseq_mef$groseq_tssr_rep1/350)+(groseq_mef$groseq_gb_rep1/transcript_width))
-# groseq_mef$groseq_gb_rep2_norm <- (groseq_mef$groseq_gb_rep2/350)/((groseq_mef$groseq_tssr_rep2/350)+(groseq_mef$groseq_gb_rep2/transcript_width))
 
 groseq_mef$groseq_tssr_rep1_norm <- groseq_mef$groseq_tssr_rep1/(groseq_mef$groseq_tssr_rep1+groseq_mef$groseq_gb_rep1)
 groseq_mef$groseq_tssr_rep2_norm <- groseq_mef$groseq_tssr_rep2/(groseq_mef$groseq_tssr_rep2+groseq_mef$groseq_gb_rep2)
@@ -872,21 +782,9 @@ test$ratio_chd4_brg1 <- cut2((test$chd4_mef_Rep1+1)/(test$brg1_mef_Rep1+1), m=25
 test$ep400_cluster <- cut2(test$groseq_tssr_rep2, m=25)
 
 test.ep400 <- test[which(test$ep400_cluster_merged=="high" | test$ep400_cluster_merged=="average"),]
-# test.ep400[,c("groseq_tssr_rep1", "groseq_tssr_rep2", "groseq_gb_rep1", "groseq_gb_rep2")] <- normalize.quantiles(as.matrix(test.ep400[,c("groseq_tssr_rep1", "groseq_tssr_rep2", "groseq_gb_rep1", "groseq_gb_rep2")]))
-# test.ep400$groseq_wt_rep1_pausing <- test.ep400$groseq_tssr_rep1/(test.ep400$groseq_tssr_rep1 + test.ep400$groseq_gb_rep1)
-# test.ep400$groseq_wt_rep2_pausing <- test.ep400$groseq_tssr_rep2/(test.ep400$groseq_tssr_rep2 + test.ep400$groseq_gb_rep2)
-# 
-# test.melt <- melt(summaryBy(groseq_wt_rep1_pausing + groseq_wt_rep2_pausing ~ ratio_chd4_brg1, data = test.ep400, FUN = list(median)))
-# ggplot(test.melt, aes(ratio_chd4_brg1, variable, fill=log(value))) + geom_tile() +
-#  scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(11, "RdBu"), bias=1)(256))) +
-#  theme(axis.text.x = element_blank())
 
 ## Pol2 pausing is not possible below a certain level of gene expression
 ## Pol2 pausing formula can thus give a false sense of high pausing for many low expressed genes
-# par(mfrow=c(2,1))
-# plot(groseq_mef$groseq_tssr_rep2_norm, log(groseq_mef$groseq_tssr_rep2))
-# plot(test.ep400$groseq_tssr_rep2_norm, log(test.ep400$groseq_tssr_rep2))
-
 test.melt <- summaryBy(h2az_mef_Rep1 + h3v3_mef_Rep1 + groseq_tssr_rep1 + groseq_tssr_rep2 + groseq_tssr_rep3 + 
                          pol2_mef_ser5p_Rep1 + pol2_mef_ser2p_Rep1 +
                          groseq_tssr_rep1_norm + groseq_tssr_rep2_norm + groseq_tssr_rep3_norm +
@@ -920,9 +818,7 @@ dev.off()
 test <- df_esc
 test[,c("chd4_esc_Rep1", "brg1_esc_Rep1")] <- normalize.quantiles(as.matrix(test[,c("chd4_esc_Rep1", "brg1_esc_Rep1")]))
 test[,c("chd4_esc_Rep2", "brg1_esc_Rep2")] <- normalize.quantiles(as.matrix(test[,c("chd4_esc_Rep2", "brg1_esc_Rep2")]))
-#test$ratio_chd4_brg1 <- cut2(log2((test$chd4)/(test$brg1)), m=25)
 test$ratio_chd4_brg1 <- cut2((test$chd4_esc_Rep1+1)/(test$brg1_esc_Rep1+1), m=25)
-# st$ratio_chd4_brg1 <- cut2((test$chd4_esc_Rep2+1)/(test$brg1_esc_Rep2+1), m=25)
 test <- test[order(test$ratio_chd4_brg1),]
 test$ratio_ser2p_ser5p <- as.numeric(normalize.quantiles(as.matrix(test$pol2_esc_ser2p_Rep1))/normalize.quantiles(as.matrix(test$pol2_esc_ser5p_Rep1)))
 
@@ -935,8 +831,6 @@ summary(test[,c("chd4_esc_Rep1", "brg1_esc_Rep1")])
 ##----------------------------------------------------##
 
 test.prc2 <- test[which(test$ep400_cluster_merged=="bivalent" | test$ep400_cluster_merged=="low"),]
-
-#barplot(rep(1, nrow(test.prc2)), col = test.prc2$ep400_cluster_merged_col, border = NA)
 
 test.melt <- melt(summaryBy(chd4_esc_Rep1 + brg1_esc_Rep1 ~ ratio_chd4_brg1, data = test.prc2, FUN = list(median)))
 p1 <- ggplot(test.melt, aes(ratio_chd4_brg1, variable, fill=(value))) + geom_tile() + 
@@ -1022,7 +916,6 @@ ggsave(g, dpi=300, height=25, width=20, filename="~/project/chip-seq-analysis/an
 ```{r}
 test <- df_mef
 test[,c("chd4_mef_Rep1", "brg1_mef_Rep1")] <- normalize.quantiles(as.matrix(test[,c("chd4_mef_Rep1", "brg1_mef_Rep1")]))
-#test$ratio_chd4_brg1 <- cut2(log2((test$chd4)/(test$brg1)), m=25)
 test$ratio_chd4_brg1 <- cut2((test$chd4_mef_Rep1+1)/(test$brg1_mef_Rep1+1), m=25)
 test$ratio_ser2p_ser5p <- as.numeric(normalize.quantiles(as.matrix(test$pol2_mef_ser2p_Rep1))/normalize.quantiles(as.matrix(test$pol2_mef_ser5p)))
 test <- test[order(test$ratio_chd4_brg1),]
@@ -1117,10 +1010,7 @@ test$ratio_chd4_brg1_mef <-  (test$chd4_mef_Rep1/test$brg1_mef_Rep1)
 test$ratio_chd4_brg1_esc <-  (test$chd4_esc_Rep1/test$brg1_esc_Rep1)
 
 test$ratio_class <- cut2(log2((test$ratio_chd4_brg1_mef)/(test$ratio_chd4_brg1_esc)), m = 100)
-# test$ratio_class <- cut2(log2(rank(test$ratio_chd4_brg1_mef)/rank(test$ratio_chd4_brg1)), g = 5)
 test$ratio_class <- cut2(log2((test$ratio_chd4_brg1_mef)/(test$ratio_chd4_brg1_esc)), c(-0.7343,0.7362))
-## very interesting patterns by defining classes using gene expr. fc
-# test$ratio_class <- cut2(test$fc, m = 100)
 test <- test[order(test$ratio_class),]
 table(test$ratio_class)
 
@@ -1192,16 +1082,6 @@ p6 <- ggboxplot(test.melt, x = "variable", y = "value",
   ylab("POL2-Ser5p signal (log2)") +
   stat_compare_means(comparisons = list(c("pol2_mef_ser5p_Rep1","pol2_esc_ser5p_Rep1")))
 
-# test.melt <- melt(test[,c("pol2_mef_ser2p_Rep1","pol2_esc_ser2p_Rep1", "ratio_class")])
-# p7 <- ggboxplot(test.melt, x = "variable", y = "value",
-#          fill = "ratio_class", notch=1, notchwidth = 0.6, yscale="log2", 
-#          facet.by = "ratio_class", legend="none",
-#          #add = "boxplot", add.params = list(fill = "white"),
-#          palette = c("#784b97", "#ebebeb", "#ffa054")) + 
-#   xlab("") + 
-#   ylab("Chd4 signal (log2)") +
-#   stat_compare_means(comparisons = list(c("pol2_mef_ser2p_Rep1","pol2_esc_ser2p_Rep1")))
-
 test$pol2_esc_ser2p_Rep1_ratio <- test$pol2_esc_ser2p_Rep1/test$pol2_esc_wt_Rep1
 test$pol2_mef_ser2p_Rep1_ratio <- test$pol2_mef_ser2p_Rep1/test$pol2_mef_wt_Rep1
 test.melt <- melt(test[,c("pol2_mef_ser2p_Rep1_ratio","pol2_esc_ser2p_Rep1_ratio", "ratio_class")])
@@ -1267,10 +1147,6 @@ df$ep400_cluster <- cut2(df$pol2_esc_wt_Rep1, m=25)
 
 df.summary <- summaryBy(log2FoldChange + chd4_fc + brg1_fc + log2FC_H2AZ + chd2_fc + chd8_fc + brd4_fc + chd9_fc ~ ep400_cluster, data = df, FUN = list(median))
 df.summary <- df.summary[!is.na(df.summary$log2FoldChange.median),]
-
-# ggplot(df.summary, aes(df.summary$log2FoldChange.median, df.summary$brg1_fc.median)) + geom_point(alpha=0.6, color="#784c97") + 
-#   geom_smooth(method="lm", se=TRUE, fullrange=FALSE, level=0.95, color="#784c97", fill="#784c97") +
-#   theme_classic()
 
 smoothScatter(df.summary$log2FoldChange.median, df.summary$brg1_fc.median, colramp=colorRampPalette(my.cols), 
               pch=19, cex=.8, useRaster=T, xlab = "Gene expr. FC (H3.3)", ylab = "Gene expr. FC (Brg1)")
@@ -1445,26 +1321,14 @@ colnames(mat2) <- seq(1,ncol(mat2))
 
 reformatMat <- as.data.frame(mat1-mat2)
 reformatMat$class <- mat$class
-# reformatMat$class <- "neutral"
-# reformatMat[c(params$group_boundaries[1]):params$group_boundaries[2],]$class <- "down"
-# reformatMat[c(params$group_boundaries[3]):params$group_boundaries[4],]$class <- "up"
-# # reformatMat[which(reformatMat$class=="neutral"),]$class <- cut2(as.numeric(row.names(reformatMat[which(reformatMat$class=="neutral"),])), g=3)
-# table(reformatMat$class)
-# reformatMat.melt <- melt(reformatMat)
-# reformatMat.melt$variable <- factor(reformatMat.melt$variable, levels=seq(1,ncol(mat1)), ordered=T)
-# ggline(reformatMat.melt, x="variable", y="value", add=c("mean_se"), color="class", palette = "jco")
 
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser5p_heatmap.pdf")
-# matrix2pheatmap(reformatMat[order(reformatMat$class),c(-201)], scale = "none", bias = 1, 
-#                 col = c("#053061", "#2166ac", "#4393c3", "white", "white", "#d6604d", "#b2182b", "#67001f"), 
-#                 breaks=c(-15, -10, -5, -2, 0, 2, 5, 10, 15))
 Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-500, -200, 0, 200, 500), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
 
 ## Pol II ser2p
 file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser2p.deepToolsMatrix.gz"
-# file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/test/pol2_ser2p_choudhary.deepToolsMatrix.gz"
 df <- read.table(pipe(sprintf("zgrep -v '@' %s", file)))
 
 df_dirk <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/promoters_esc_dirk.bed")
@@ -1494,56 +1358,13 @@ colnames(mat2) <- seq(1,ncol(mat2))
 
 reformatMat <- as.data.frame(mat1-mat2)
 reformatMat$class <- mat$class
-# reformatMat$class <- "neutral"
-# reformatMat[c(params$group_boundaries[1]):params$group_boundaries[2],]$class <- "down"
-# reformatMat[c(params$group_boundaries[3]):params$group_boundaries[4],]$class <- "up"
-# # reformatMat[which(reformatMat$class=="neutral"),]$class <- cut2(as.numeric(row.names(reformatMat[which(reformatMat$class=="neutral"),])), g=3)
-# table(reformatMat$class)
-# reformatMat.melt <- melt(reformatMat)
-# reformatMat.melt$variable <- factor(reformatMat.melt$variable, levels=seq(1,ncol(mat1)), ordered=T)
-# ggline(reformatMat.melt, x="variable", y="value", add=c("mean_se"), color="class", palette = "jco")
-
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser2p_heatmap.pdf")
-# matrix2pheatmap(reformatMat[order(reformatMat$class),c(-ncol(reformatMat))], scale = "none", bias = 1, 
-#                 col = c("#053061", "#2166ac", "#4393c3", "white", "white", "#d6604d", "#b2182b", "#67001f"), 
-#                 breaks=c(-20, -10, -5, -1, 0, 1, 5, 10, 20))
-#                 # breaks=c(-500, -250, -50, -5, 0, 5, 50, 250, 500))
 Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-20, -10, 0, 10, 20), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
 
 barplot(as.matrix(reformatMat[grep("^Cdk1$", df$V4), c(-201)])) ## Cdk1
 barplot(as.matrix(reformatMat[grep("^Ercc6l$", df$V4), c(-201)])) ## Ercc6l
-
-# ## Pol II ser2p (gene regulation)
-# file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser2p_dirk.deepToolsMatrix.gz"
-# df <- read.table(pipe(sprintf("zgrep -v '@' %s", file)))
-# 
-# mat <- (df[,-c(1:6)])
-# library("jsonlite")
-# h <- scan(file, n=1, sep="\n", what=character())
-# params <- fromJSON(txt=gsub("@", "", h))
-# 
-# len <- params$sample_boundaries[2]-params$sample_boundaries[1]
-# mat.lst <- lapply(seq(1,length(params$sample_boundaries)-1), function(x) {
-#   mat[,c((params$sample_boundaries[x]+1):(params$sample_boundaries[x]+len))]
-#   })
-# 
-# samples <- unlist(strsplit("CHD4i,CHD4i,CHD4i,H2O,H2O,H2O", ","))
-# index <- lapply(unique(samples), function(x) grep(x, samples))
-# 
-# mat1 <- mat.lst[[1]]
-# colnames(mat1) <- seq(1,ncol(mat1))
-# mat2 <- mat.lst[[2]]
-# colnames(mat2) <- seq(1,ncol(mat2))
-# 
-# reformatMat <- as.data.frame(mat1-mat2)
-# 
-# reformatMat$class <- "neutral"
-# reformatMat[c(1:608),]$class <- "down"
-# reformatMat[c(7935:9065),]$class <- "up"
-# df.melt <- melt(reformatMat[,c(100:201)])
-# ggline(df.melt, x = "variable", y = "value", add = "mean", color="class")
 
 ## PCA plots
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/pca_brg1.pdf")
@@ -1587,16 +1408,12 @@ reformatMat <- as.data.frame(mat1-mat2)
 reformatMat$class <- mat$class
 
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/chd4/pol2_ser5p_heatmap.pdf")
-# matrix2pheatmap(reformatMat[,c(-201)], scale = "none", bias = 1, 
-#                 col = c("#053061", "#2166ac", "#4393c3", "white", "white", "#d6604d", "#b2182b", "#67001f"), 
-#                 breaks=c(-15, -10, -5, -2, 0, 2, 5, 10, 15))
 Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-2000, -1000, 0, 1000, 2000), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
 
 ## Pol II ser2p
 file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/chd4/pol2_Ser2p_genebody.deepToolsMatrix.gz"
-# file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/test/pol2_ser2p_choudhary.deepToolsMatrix.gz"
 df <- read.table(pipe(sprintf("zgrep -v '@' %s", file)))
 
 mat <- (df[,-c(1:6)])
@@ -1617,55 +1434,15 @@ colnames(mat1) <- seq(1,ncol(mat1))
 mat2 <- mat.lst[[2]]
 colnames(mat2) <- seq(1,ncol(mat2))
 
-# reformatMat <- as.data.frame(log(mat1+1)/log(mat2+1))
-# reformatMat <- na.omit(reformatMat[!is.infinite(rowSums(reformatMat)),])
-# Heatmap(reformatMat[,c(-ncol(reformatMat))], cluster_rows=F, cluster_columns=F, col=rev(colorBrewer2palette(name = "RdBu", count = 50, bias=1)))
-
 reformatMat <- as.data.frame(mat1-mat2)
 
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/chd4/pol2_ser2p_heatmap.pdf")
-# matrix2pheatmap(reformatMat[,c(-ncol(reformatMat))], scale = "none", bias = 1,
-#                 col = c("#053061", "#2166ac", "#4393c3", "white", "white", "#d6604d", "#b2182b", "#67001f"), 
-#                 breaks=c(-3, -2, -1, -0.2, 0, 0.2, 1, 2, 3))
-#                 # breaks=c(-500, -250, -50, -5, 0, 5, 50, 250, 500))
-
 Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-20, -10, 0, 300, 400), c("#2166ac", "white", "white", "white", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
 
 barplot(as.matrix(reformatMat[grep("^Cdk1$", df$V4), c(-201)])) ## Cdk1
 barplot(as.matrix(reformatMat[grep("^Ercc6l$", df$V4), c(-201)])) ## Ercc6l
-
-## Pol II ser2p (gene regulation)
-# file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/chd4/pol2_ser2p_class.deepToolsMatrix.gz"
-# df <- read.table(pipe(sprintf("zgrep -v '@' %s", file)))
-# 
-# mat <- (df[,-c(1:6)])
-# library("jsonlite")
-# h <- scan(file, n=1, sep="\n", what=character())
-# params <- fromJSON(txt=gsub("@", "", h))
-# 
-# len <- params$sample_boundaries[2]-params$sample_boundaries[1]
-# mat.lst <- lapply(seq(1,length(params$sample_boundaries)-1), function(x) {
-#   mat[,c((params$sample_boundaries[x]+1):(params$sample_boundaries[x]+len))]
-#   })
-# 
-# samples <- unlist(strsplit("CHD4i,CHD4i,CHD4i,H2O,H2O,H2O", ","))
-# index <- lapply(unique(samples), function(x) grep(x, samples))
-# 
-# mat1 <- mat.lst[[1]]
-# colnames(mat1) <- seq(1,ncol(mat1))
-# mat2 <- mat.lst[[2]]
-# colnames(mat2) <- seq(1,ncol(mat2))
-# 
-# reformatMat <- as.data.frame(mat1-mat2)
-# reformatMat <- as.data.frame(log2(mat1/mat2))
-# 
-# reformatMat$class <- "neutral"
-# reformatMat[c(1:608),]$class <- "down"
-# reformatMat[c(7935:9065),]$class <- "up"
-# df.melt <- melt(reformatMat[,c(100:201)])
-# ggline(df.melt, x = "variable", y = "value", add = "mean", color="class")
 
 ## PCA plots
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/pca_chd4.pdf")
@@ -1691,10 +1468,7 @@ chd4_h2az$gene <- df$gene
 
 chd4_h2az <- merge(chd4_h2az, df_esc[,c("name", "chd4_esc_Rep1")], by.x="gene", by.y="name")
 
-chd4_h2az$class_chd4 <- cut(chd4_h2az$chd4_esc_Rep1, breaks = c(0, as.vector(quantile(chd4_h2az$chd4))[2:5]))
-# chd4_h2az$class_mll2 <- cut(chd4_h2az$mll2, breaks = c(0, as.vector(quantile(chd4_h2az$mll2))[2:5]))
 chd4_h2az$class_chd4 <- cut(chd4_h2az$chd4_esc_Rep1, breaks = c(0, 0.45, 0.65, 0.75, 0.85, 1.2, 100))
-# chd4_h2az$class_chd4 <- cut(chd4_h2az$chd4_esc_Rep1, breaks = c(0, 0.4, 0.6, 0.8, 1.2, 1.4, 1.6, 100))
 table(chd4_h2az$class_chd4)
 chd4_h2az$shRNA <- rowMeans(chd4_h2az[,c("shRNA1", "shRNA3")])
 chd4_h2az$SCR <- rowMeans(chd4_h2az[,c("SCR1", "SCR3")])
@@ -1710,13 +1484,6 @@ p2 <- ggerrorplot(df.melt, x = "variable", y = "value", color="variable", facet.
   stat_compare_means(comparisons = list( c("SCR", "shRNA")), method.args = list(c(alternative = "g")), 
                      label.y=c(-70, -80, -90, -100)) +
   scale_color_manual(values=c("#b2182b", "#2166ac"))
-# df.melt <- melt((chd4_h2az[,c("shRNA", "SCR", "class_mll2")]))
-# df.melt$variable <- factor(df.melt$variable, levels=c("SCR", "shRNA"), ordered=T)
-# p2 <- ggerrorplot(df.melt, x = "class_mll2", y = "value", color="variable") + 
-#   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
-#   stat_compare_means(comparisons = list( c("(0,1.09]", "(1.09,1.37]"), c("(1.09,1.37]", "(1.37,1.69]"), c("(1.37,1.69]", "(1.69,4.82]") ),
-#                      label.y=c(-70, -80, -90, -100)) +
-#   scale_color_manual(values=c("#b2182b", "#2166ac"))
 
 ## Brg1
 brg1_h3v3 <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/megadepth/brg1_h3v3.signal")
@@ -1727,10 +1494,7 @@ brg1_h3v3$gene <- df$gene
 
 brg1_h3v3 <- merge(brg1_h3v3, df_esc[,c("name", "brg1_esc_Rep1")], by.x="gene", by.y="name")
 
-# brg1_h3v3$class_brg1 <- cut(brg1_h3v3$brg1_esc_Rep1, breaks = c(0, as.vector(quantile(brg1_h3v3$brg1))[2:5]))
-# brg1_h3v3$class_mll2 <- cut(brg1_h3v3$mll2, breaks = c(0, as.vector(quantile(brg1_h3v3$mll2))[2:5]))
 brg1_h3v3$class_brg1 <- cut(brg1_h3v3$brg1_esc_Rep1, breaks = c(0, 0.4, 0.5, 0.7, 0.8, 1, 100))
-# brg1_h3v3$class_mll2 <- cut(brg1_h3v3$mll2, breaks = c(0, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 100))
 table(brg1_h3v3$class_brg1)
 brg1_h3v3$BRM014 <- rowMeans(brg1_h3v3[,c("BRM014_1", "BRM014_2")])
 brg1_h3v3$DMSO <- rowMeans(brg1_h3v3[,c("DMSO2", "DMSO3")])
@@ -1752,57 +1516,8 @@ ggarrange(p1, p2, p3, p4, nrow=2, ncol=2, labels = c("A) H2A.Z (CHD4)", "B) H2A.
 dev.off()
 
 # #####################
-# ## EdgeR
-# #####################
-# df <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/gene_enzyme_enhancer.bed.histoneVariants", header=T)
-# 
-# #####################
-# ## Brg1
-# #####################
-# 
-# SPIS <- read.table(pipe("cat ~/bric_share/bp_nextgen/00_ALL_CHIP-SEQ_RAW/CHD4_BRG1/histone_variants/MAPSTAT.xls | cut -f 1,16 | grep '^BRM014\\|^DMSO'"), header=F)
-# 
-# ## Brg1 (H2A.Z)
-# mat <- df[,grep("^BRM014_H2A.Z|^DMSO_H2A.Z", colnames(df), value=T)]
-# row.names(mat) <- df$name
-# mat <- mat[,c(1:5)]
-# res.brg1_h2az <- matrix2edgeR(mat, "2,2,1,1,1", coefficient = 2, SPIS[grep("H2A-Z", SPIS$V1)[1:5],]$V2)
-# ggplot(res.brg1_h2az, aes(logCPM, logFC, color=class)) + geom_point()
-# 
-# ## Brg1 (H3.3)
-# mat <- df[,grep("^BRM014_H3.3|^DMSO_H3.3", colnames(df), value=T)]
-# row.names(mat) <- df$name
-# mat <- mat[,c(1:5)]
-# res.brg1_h3v3 <- matrix2edgeR(mat, "2,2,1,1,1", coefficient = 2, SPIS[grep("H3-3", SPIS$V1)[1:5],]$V2)
-# ggplot(res.brg1_h3v3, aes(logCPM, logFC, color=class)) + geom_point()
-# 
-# #####################
 # ## Chd4
 # #####################
-# 
-# SPIS <- read.table(pipe("cat ~/bric_share/bp_nextgen/00_ALL_CHIP-SEQ_RAW/CHD4_BRG1/histone_variants/MAPSTAT.xls | cut -f 1,15 | grep '^mESC'"), header=F)
-# 
-# ## Chd4 (H2A.Z)
-# mat <- df[,grep("^mESC_H2A.Z", colnames(df), value=T)]
-# row.names(mat) <- df$name
-# res.chd4_h2az <- matrix2edgeR(mat, "2,2,2,1,1,1", coefficient = 2, SPIS[grep("H2A-Z", SPIS$V1),]$V2)
-# res.chd4_h2az$shRNA <- rowMeans(res.chd4_h2az[,grep("^mESC.*Chd4_shR.*mm9$", colnames(res.chd4_h2az), value=T)])
-# res.chd4_h2az$SCR <- rowMeans(res.chd4_h2az[,grep("^mESC.*Scr_shR.*mm9$", colnames(res.chd4_h2az), value=T)])
-# res.chd4_h2az$value <- res.chd4_h2az$shRNA - res.chd4_h2az$SCR
-# # ggplot(res.chd4_h2az, aes(logCPM, logFC, color=class)) + geom_point()
-# 
-# res.chd4_h2az <- merge(res.chd4_h2az, chd4_signal, by.x="gene", by.y="gene")
-# res.chd4_h2az$class_signal <- cut2(res.chd4_h2az$chd4, g = 3)
-# res.chd4_h2az$class_signal <- cut(res.chd4_h2az$chd4, breaks = c(0, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 7))
-# ggerrorplot(res.chd4_h2az, x = "class_signal", y = "value") +
-#   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
-# 
-# ## Chd4 (H3.3)
-# mat <- df[,grep("^mESC_H3.3", colnames(df), value=T)]
-# row.names(mat) <- df$name
-# res.chd4_h3v3 <- matrix2edgeR(mat, "2,2,2,1,1,1", coefficient = 2, SPIS[grep("H3.3", SPIS$V1),]$V2)
-# ggplot(res.chd4_h3v3, aes(logCPM, logFC, color=class)) + geom_point()
-
 ## PCA plots
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/pca_histone_variants.pdf")
 df <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/histone_variants/brg1_h3v3_replicates_multiBigwigSummary.bedSignal", header=T)
@@ -1822,34 +1537,6 @@ plotCustomPCA(df[,c(8:11)], n = 4)
 ggarrange(matrix2Heatmap(cor(df[,c(8:11)], method="spearman"), col = "Reds", displayN = T, clusterRows = T, clusterCols = T))
 dev.off()
 ```
-##################################################
-## misc analysis
-##################################################
-```{r}
-# df <- read.table("/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/brg1_ko/authors_defined/ATAC_peaks_log2FC_BRM014_Brg1KO.bed")
-# 
-# nrow(df[which(df$V10=="promoter" & df$V7<0),])/nrow(df[which(df$V10=="promoter"),])
-# nrow(df[which(df$V10=="enhancer" & df$V7<0),])/nrow(df[which(df$V10=="enhancer"),])
-# ggplot(df, aes(V10, as.numeric(V7))) + geom_boxplot()
-
-df <- read.table("~/bric_share/bp_nextgen/09_ALL_PUBLIC/rna-seq/mouse/mef_esc_reprogramming/myc/GENE_EXPRESSION.MATRIX", header=T)
-mat <- df[,c(9:12,17:19)]
-mat$eu.myc.rnaseq.t_1.bam <- mat$eu.myc.rnaseq.t_1.bam*1000
-mat$eu.myc.rnaseq.t_2.bam <- mat$eu.myc.rnaseq.t_2.bam*1000
-mat$eu.myc.rnaseq.t_3.bam <- mat$eu.myc.rnaseq.t_3.bam*1000
-row.names(mat) <- df$name
-mat <- mat[which(row.names(mat) %in% dirk_data$SYMBOL),]
-boxplot(log(mat+1))
-res.myc <- matrix2deseq2(mat, "wt,wt,wt,wt,ko,ko,ko", cutoff = 0.05)
-mean(res.myc[which(res.myc$class=="down"),]$log2FoldChange)
-ggplot(res.myc, aes(log(baseMean), log2FoldChange, color=class)) + geom_point()
-table(res.myc$class)
-p1 <- ggplot(res.myc, aes(class, log(baseMean))) + geom_boxplot()
-p2 <- ggplot(res.chd4, aes(class, log(baseMean))) + geom_boxplot()
-p3 <- ggplot(res_dirk_data, aes(class, log(baseMean))) + geom_boxplot()
-ggarrange(p1, p2, p3, nrow=1, ncol=3)
-```
-
 
 ##################################################
 ## Nascent RNA-seq data analysis (load data)
@@ -1870,28 +1557,6 @@ df_nascent_dm6 <- read.table("~/bric_share/bp_nextgen/01_ALL_RNA-SEQ_RAW/CHD4_BR
 mat_nascent_dm6 <- df_nascent_dm6[,c(-1)]
 row.names(mat_nascent_dm6) <- df_nascent_dm6$name
 colnames(mat_nascent_dm6) <- colnames(mat_nascent)
-
-# par(mfrow=c(1,2))
-# boxplot(mat_nascent_ercc[which(row.names(mat_nascent_ercc) %in% c("ERCC-00043", "ERCC-00136", "ERCC-00092")),], las=2)
-# boxplot(log(mat_nascent_dm6[which(apply(mat_nascent_dm6, 1, function(x) length(x[x>=5])>=2)),]+1), las=2)
-
-# ## brg1
-# mat <- mat_nascent[,c(1:4,8:10)]
-# ggarrange(matrix2Heatmap(cor(mat, method="pearson"), clusterRows = T, clusterCols = T))
-# mat <- mat[which(rowMin(as.matrix(mat)) > 2),]
-# res_brg1 <- matrix2deseq2(mat, "ko,ko,ko,ko,wt,wt,wt")
-# table(res_brg1$class)
-# test <- merge(res_brg1, df_esc[,c("name", "ep400_cluster_merged", "chd4_fc", "brg1_fc")], by.x="gene", by.y="name")
-# ggplot(test, aes(ep400_cluster_merged, log2FoldChange)) + geom_boxplot() + theme_bw()
-#  
-# ## chd4
-# mat <- mat_nascent[,c(5:7,11:13)]
-# ggarrange(matrix2Heatmap(cor(mat, method="spearman"), clusterRows = T, clusterCols = T))
-# mat <- mat[which(rowMin(as.matrix(mat)) > 2),]
-# res_chd4 <- matrix2deseq2(mat, "ko,ko,ko,wt,wt,wt")
-# table(res_chd4$class)
-# test <- merge(res_chd4, df_esc[,c("name", "ep400_cluster_merged", "chd4_fc", "brg1_fc")], by.x="gene", by.y="name")
-# ggplot(test, aes(ep400_cluster_merged, log2FoldChange)) + geom_boxplot() + theme_bw()
 ```
 ##################################################
 ## Nascent RNA-seq data analysis (spike-in - Brg1 - Volcano plots)
@@ -1904,8 +1569,6 @@ library("edgeR")
 #filter genes with less than 5 reads in at least 2 samples
 mat <- rbind(mat_nascent, mat_nascent_ercc[which(row.names(mat_nascent_ercc) %in% c("ERCC-00043", "ERCC-00136", "ERCC-00092")),])
 mat <- mat[which(apply(mat[,c(1:2,5:6)], 1, function(x) length(x[x>=5])>=2)),c(1:2,5:6)]
-# mat <- mat[which(apply(mat[,c("BRM014_r3.bam", "BRM014_r4.bam","DMSO_r1.bam", "DMSO_r2.bam")], 1, function(x) length(x[x>=5])>=2)),
-#            c("BRM014_r3.bam", "BRM014_r4.bam","DMSO_r1.bam", "DMSO_r2.bam")]
 genes <- rownames(mat)[grep("^ERCC-", invert=TRUE, rownames(mat))]
 spikes <- rownames(mat)[grep("^ERCC-", rownames(mat))]
 
@@ -1974,48 +1637,6 @@ ggbarplot(df.melt, x = "variable", y = "value",
 dev.off()
 
 ##----------------------------------------------------##
-## start analysis
-##----------------------------------------------------##
-# test_brg1 <- merge(res_brg1, df_esc, by.x="row.names", by.y="name")
-# test_brg1$ep400_cluster_merged <- factor(test_brg1$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"),
-#                                     ordered=T)
-# test_brg1$brg1_class_spikeIn <- "0"
-# test_brg1[which(test_brg1$logFC > 0.41),]$brg1_class_spikeIn <- as.character(cut2(test_brg1[which(test_brg1$logFC > 0.41),]$logFC, g=3))
-# test_brg1[which(test_brg1$logFC < -0.41),]$brg1_class_spikeIn <- as.character(cut2(test_brg1[which(test_brg1$logFC < -0.41),]$logFC, g=3))
-# test_brg1$brg1_class_spikeIn <- as.factor(as.numeric(gsub("]", "", gsub("[)]+", "", gsub("^.*,", "", test_brg1$brg1_class_spikeIn)))))
-# table(test_brg1$brg1_class_spikeIn)
-# 
-# p1 <- ggboxplot(test_brg1, x = "ep400_cluster_merged", y = "logFC", fill = "gray", notch=0, notchwidth = 0.6,
-#           yscale="none", legend="none", title="inhibitor - BRM014", outlier.shape=NA) + xlab("Gene classes defined in our study") +  
-#   ylab("log2FC in expr. (3hr vs DMSO; spike-in normalized)") +
-#   stat_compare_means(comparisons = list(c("average", "low"), c("high", "bivalent")), method.args = list(alternative = "g"), label.y=c(0.7,1)) + 
-#   geom_hline(yintercept = 0) +
-#   theme(axis.text.x = element_text(size=10, angle=45)) + ylim(c(-1.5,1.5))
-# 
-# p1.1 <- ggboxplot(df_esc, x = "ep400_cluster_merged", y = "brg1_fc", fill = "gray", notch=0, notchwidth = 0.6,
-#           yscale="none", legend="none", title="inhibitor - BRM014", outlier.shape=NA) + xlab("Gene classes defined in our study") +  
-#   ylab("log2FC in expr. (3hr vs DMSO; spike-in normalized)") +
-#   stat_compare_means(comparisons = list(c("average", "low"), c("high", "bivalent")), method.args = list(alternative = "g"), label.y=c(0.7,1)) + 
-#   geom_hline(yintercept = 0) +
-#   theme(axis.text.x = element_text(size=10, angle=45)) + ylim(c(-1.5,1.5))
-
-##----------------------------------------------------##
-## edgeR
-##----------------------------------------------------##
-# spikeIn_factor <- colSums(mat[spikes,])
-# res_brg1 <- matrix2edgeR(mat[genes,], treatment = "2,2,1,1", coefficient = 2, spikeInScale = paste(spikeIn_factor, collapse=","))
-# 
-# test <- merge(res_brg1, df_esc[,c("name", "ep400_cluster_merged", "chd4_fc", "chd4_class", "brg1_fc", "brg1_class")], by.x="gene", by.y="name")
-# test$ep400_cluster_merged <- factor(test$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"),
-#                                     ordered=T)
-# ggboxplot(test, x = "ep400_cluster_merged", y = "logFC", fill = "gray", notch=0, notchwidth = 0.6,
-#           yscale="none", legend="none", title="inhibitor - BRM014", outlier.shape=NA) + xlab("Gene classes defined in our study") +
-#   ylab("log2FC in expr. (3hr vs DMSO; spike-in normalized)") +
-#   stat_compare_means(comparisons = list(c("average", "low"), c("high", "bivalent")), method.args = list(alternative = "g"), label.y=c(0.7,1)) +
-#   geom_hline(yintercept = 0) +
-#   theme(axis.text.x = element_text(size=10, angle=45)) + ylim(c(-1,1.5))
-
-##----------------------------------------------------##
 ## volcano plot analysis
 ##----------------------------------------------------##
 
@@ -2066,26 +1687,6 @@ ggscatter(test.melt, x = "log2FoldChange.median", y = "logFC.median", color="#78
 plotPCA(set1, col=colors[x], cex=1.2, lty=1)
 ggarrange(matrix2Heatmap(cor(counts(set1), method="spearman"), clusterRows = T, clusterCols = T, col = "Reds", displayN = T))
 dev.off()
-
-## overlap analysis
-# pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/nascentRNA_brg1_venn.pdf")
-# library(Vennerable)
-# test <- test_brg1
-# test$brg1_class_spikeIn <- as.numeric(as.character(test$brg1_class_spikeIn))
-# go.obj <- newGeneOverlap(test[which(test$brg1_class_spikeIn >= 0.41),]$Row.names, 
-#                test[which(test$brg1_class=="up"),]$Row.names, genome.size=gs.RNASeq)
-# go.obj <- testGeneOverlap(go.obj)
-# getOddsRatio(go.obj)
-# getContbl(go.obj)
-# go.obj
-# par(mfrow=c(1,3))
-# # unlist(lapply(seq(100, 5000, by=200), function(x) length(attributes(Venn(list(SI_brg1=head(test_brg1[order(-test_brg1$logFC),]$Row.names, x), brg1=head(test_brg1[order(-test_brg1$brg1_fc),]$Row.names, x))))$IntersectionSets$`11`)))/seq(100, 5000, by=200)
-# # plot(Venn(list(spikeIn_brg1=test[which(test$class=="up"),]$Row.names, brg1=test[which(test$brg1_class!="down"),]$Row.names)))
-# plot(Venn(list(spikeIn_brg1=test[which(test$brg1_class_spikeIn >= 0.41),]$Row.names, brg1=test[which(test$brg1_fc > 0.41),]$Row.names)))
-# plot(Venn(list(spikeIn_brg1=test[which(test$brg1_class_spikeIn >= 0.41),]$Row.names, brg1=test[which(test$brg1_class!="down"),]$Row.names)))
-# plot(Venn(list(spikeIn_brg1=test[which(test$brg1_class_spikeIn <= -0.41),]$Row.names, brg1=test[which(test$brg1_fc < -0.41),]$Row.names)))
-# plot(Venn(list(spikeIn_brg1=test[which(test$brg1_class_spikeIn <= -0.41),]$Row.names, brg1=test[which(test$brg1_class!="up"),]$Row.names)))
-# dev.off()
 ```
 ##################################################
 ## Nascent RNA-seq data analysis (spike-in - Chd4 - Volcano plots)
@@ -2100,11 +1701,6 @@ mat <- rbind(mat_nascent, mat_nascent_ercc[which(row.names(mat_nascent_ercc) %in
 mat <- mat[which(apply(mat[,c(3,4,7,8)], 1, function(x) length(x[x>=5])>=2)),c(3,4,7,8)]
 genes <- rownames(mat)[grep("^ERCC-", invert=TRUE, rownames(mat))]
 spikes <- rownames(mat)[grep("^ERCC-", rownames(mat))]
-
-# mat <- rbind(mat_nascent, mat_nascent_dm6)
-# mat <- mat[which(apply(mat[,c(5,7,11,13)], 1, function(x) length(x[x>=5])>=2)),c(5,7,11,13)]
-# genes <- rownames(mat)[grep("^FBgn", invert=TRUE, rownames(mat))]
-# spikes <- rownames(mat)[grep("^FBgn", rownames(mat))]
 
 #create EDASeq Object
 x <- as.factor(c(rep("KO", 2), rep("Ctrl", 2)))
@@ -2165,49 +1761,6 @@ ggbarplot(df.melt, x = "variable", y = "value",
 dev.off()
 
 ##----------------------------------------------------##
-## start analysis
-##----------------------------------------------------##
-
-# test_chd4 <- merge(res_chd4, df_esc, by.x="row.names", by.y="name")
-# test_chd4$ep400_cluster_merged <- factor(test_chd4$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"),
-#                                     ordered=T)
-# test_chd4$chd4_class_spikeIn <- "0"
-# test_chd4[which(test_chd4$logFC > 1.2),]$chd4_class_spikeIn <- as.character(cut2(test_chd4[which(test_chd4$logFC > 1.2),]$logFC, g=3))
-# test_chd4[which(test_chd4$logFC < -1.2),]$chd4_class_spikeIn <- as.character(cut2(test_chd4[which(test_chd4$logFC < -1.2),]$logFC, g=3))
-# test_chd4$chd4_class_spikeIn <- as.factor(as.numeric(gsub("]", "", gsub("[)]+", "", gsub("^.*,", "", test_chd4$chd4_class_spikeIn)))))
-# table(test_chd4$chd4_class_spikeIn)
-# 
-# p2 <- ggboxplot(test_chd4, x = "ep400_cluster_merged", y = "logFC", fill = "gray", notch=1, notchwidth = 0.6,
-#           yscale="none", legend="none", title="Chd4 shRNA; spikeIn", outlier.shape=NA) + xlab("Gene classes defined in our study") +  
-#   ylab("logFC in expr. (Chd4 shRNA)") +
-#   stat_compare_means(comparisons = list(c("average", "low"), c("high", "bivalent")), method.args = list(alternative = "l"), label.y=c(1.2,1.4)) + 
-#   geom_hline(yintercept = 0) +
-#   theme(axis.text.x = element_text(size=10, angle=45)) + ylim(c(-4,5))
-# 
-# p2.1 <- ggboxplot(df_esc, x = "ep400_cluster_merged", y = "chd4_fc", fill = "gray", notch=0, notchwidth = 0.6,
-#           yscale="none", legend="none", title="Chd4 shRNA", outlier.shape=NA) + xlab("Gene classes defined in our study") +  
-#   ylab("logFC in expr. (Chd4 shRNA)") +
-#   stat_compare_means(comparisons = list(c("average", "low"), c("high", "bivalent")), method.args = list(alternative = "l"), label.y=c(0.5,0.7)) + 
-#   geom_hline(yintercept = 0) +
-#   theme(axis.text.x = element_text(size=10, angle=45)) + ylim(c(-1,1.1))
-
-##----------------------------------------------------##
-## edgeR
-##----------------------------------------------------##
-# spikeIn_factor <- colSums(mat[spikes,])
-# res_chd4 <- matrix2edgeR(mat[genes,], treatment = "2,2,1,1", coefficient = 2, spikeInScale = paste(spikeIn_factor, collapse=","))
-# 
-# test <- merge(res_chd4, df_esc[,c("name", "ep400_cluster_merged", "chd4_fc", "chd4_class", "brg1_fc", "brg1_class")], by.x="gene", by.y="name")
-# test$ep400_cluster_merged <- factor(test$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"),
-#                                     ordered=T)
-# ggboxplot(test, x = "ep400_cluster_merged", y = "logFC", fill = "gray", notch=1, notchwidth = 0.6,
-#           yscale="none", legend="none", title="Chd4 shRNA; spikeIn", outlier.shape=NA) + xlab("Gene classes defined in our study") +
-#   ylab("logFC in expr. (Chd4 shRNA)") +
-#   stat_compare_means(comparisons = list(c("average", "low"), c("high", "bivalent")), method.args = list(alternative = "l"), label.y=c(1.2,1.4)) +
-#   geom_hline(yintercept = 0) +
-#   theme(axis.text.x = element_text(size=10, angle=45))
-
-##----------------------------------------------------##
 ## volcano plot analysis
 ##----------------------------------------------------##
 
@@ -2237,10 +1790,6 @@ pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/nascentRNA_chd4.pdf", us
 g2
 test <- test_chd4
 test$ep400_cluster <- cut2(test$pol2_esc_wt_Rep1, m=25)
-# nrow(test[which(test$chd4_fc>0 & test$logFC>0),])
-# nrow(test[which(test$chd4_fc>0 & test$logFC<0),])
-# nrow(test[which(test$chd4_fc<0 & test$logFC<0),])
-# nrow(test[which(test$chd4_fc<0 & test$logFC>0),])
 test.melt <- summaryBy(chd4_fc +  logFC ~ ep400_cluster, data = test, FUN = list(median))
 smoothScatter(test.melt$chd4_fc.median, test.melt$logFC.median, colramp=colorRampPalette(my.cols), pch=19, cex=.8, useRaster=T, xlab = "Chd4 KD (logFC)", ylab = "Chd4 KD (logFC; spike-in)")
 lines(lowess(test.melt$chd4_fc.median, test.melt$logFC.median),col='red', lty="dashed")
@@ -2260,24 +1809,6 @@ test.melt <- summaryBy(logFC.x +  logFC.y ~ ep400_cluster, data = test, FUN = li
 smoothScatter(test.melt$logFC.x.median, test.melt$logFC.y.median, colramp=colorRampPalette(my.cols), pch=19, cex=.8, useRaster=T, xlab = "Brg1 BRM014 (logFC; spike-in)", ylab = "Chd4 shRNA (logFC; spike-in)")
 lines(lowess(test.melt$logFC.x.median, test.melt$logFC.y.median),col='red', lty="dashed")
 cor.test(test.melt$logFC.x.median, test.melt$logFC.y.median, method="spearman")
-
-## overlap analysis
-# pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/nascentRNA_chd4_venn.pdf")
-# library(Vennerable)
-# test <- test_chd4
-# test$chd4_class_spikeIn <- as.numeric(as.character(test$chd4_class_spikeIn))
-# go.obj <- newGeneOverlap(test[which(test$chd4_class_spikeIn>=1.2),]$Row.names, 
-#                test[which(test$chd4_class=="up"),]$Row.names, genome.size=gs.RNASeq)
-# go.obj <- testGeneOverlap(go.obj)
-# getOddsRatio(go.obj)
-# getContbl(go.obj)
-# go.obj
-# unlist(lapply(seq(100, 5000, by=200), function(x) length(attributes(Venn(list(SI_chd4=head(test_brg1[order(-test_chd4$logFC),]$Row.names, x), brg1=head(test_chd4[order(-test_chd4$brg1_fc),]$Row.names, x))))$IntersectionSets$`11`)))/seq(100, 5000, by=200)
-# plot(Venn(list(spikeIn_chd4=test[which(test$chd4_class_spikeIn >= 1.2),]$Row.names, chd4=test[which(test$chd4_fc > 0.41),]$Row.names)))
-# plot(Venn(list(spikeIn_chd4=test[which(test$chd4_class_spikeIn >= 1.2),]$Row.names, chd4=test[which(test$chd4_class!="down"),]$Row.names)))
-# plot(Venn(list(spikeIn_chd4=test[which(test$chd4_class_spikeIn <= -1.2),]$Row.names, chd4=test[which(test$chd4_fc < -0.41),]$Row.names)))
-# plot(Venn(list(spikeIn_chd4=test[which(test$chd4_class_spikeIn <= -1.2),]$Row.names, chd4=test[which(test$chd4_class!="up"),]$Row.names)))
-# dev.off()
 ```
 ##################################################
 ## Nascent RNA-seq data analysis (spike-in - Brg1 and Chd4 - heatmaps)
@@ -2293,28 +1824,14 @@ p1 <-ggplot(test.melt, aes(ep400_cluster, variable, fill=value)) + geom_tile() +
   facet_grid(.~ promoter_class_merged ) +
   theme(axis.text.x = element_text(size=10, angle=45)) + xlab("BRG1 inhibition (nascent RNA changes)")
 
-# test.melt <- melt(summaryBy(brg1_fc ~ ep400_cluster + promoter_class_merged, data = test, FUN = list(median)))
-# p2 <- ggplot(test.melt, aes(ep400_cluster, variable, fill=value)) + geom_tile() + 
-#   scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(5, "RdBu"), bias=1.7)(56))) +
-#   facet_grid(.~promoter_class_merged) +
-#   theme(axis.text.x = element_text(size=10, angle=45))
-
 test <- test_chd4
 test$ep400_cluster <- cut2(test$pol2_esc_wt_Rep1, m=25)
 
 test.melt <- melt(summaryBy(logFC ~ ep400_cluster + promoter_class_merged, data = test, FUN = list(median)))
-#barplot(test.melt[order(test.melt$promoter_class_merged, test.melt$ep400_cluster),]$value)
 p3 <- ggplot(test.melt, aes(ep400_cluster, variable, fill=value)) + geom_tile() + 
   scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(5, "RdBu"), bias=0.9)(56))) +
   facet_grid(.~ promoter_class_merged ) +
   theme(axis.text.x = element_text(size=10, angle=45)) + xlab("Chd4 knock-down (nascent RNA changes)")
-
-# test.melt <- melt(summaryBy(chd4_fc ~ ep400_cluster + promoter_class_merged, data = test, FUN = list(median)))
-# #barplot(test.melt[order(test.melt$promoter_class_merged, test.melt$ep400_cluster),]$value)
-# p4 <- ggplot(test.melt, aes(ep400_cluster, variable, fill=value)) + geom_tile() + 
-#   scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(5, "RdBu"), bias=0.55)(56))) +
-#   facet_grid(.~promoter_class_merged) +
-#   theme(axis.text.x = element_text(size=10, angle=45))
 
 g <- ggarrange(p1, p3, nrow=2, ncol=1)
 g
@@ -2324,7 +1841,6 @@ ggsave(g, dpi=300, height=15, width=18, filename="~/project/chip-seq-analysis/an
 test <- test_brg1[which(test_brg1$ep400_cluster_merged=="High" | test_brg1$ep400_cluster_merged=="average"),]
 test$ep400_cluster <- cut2(test$pol2_esc_wt_Rep1, m=25)
 test.melt <- melt(summaryBy(logFC ~ ep400_cluster, data = test, FUN = list(median)))
-#barplot(test.melt[order(test.melt$promoter_class_merged, test.melt$ep400_cluster),]$value)
 p1 <- ggplot(test.melt, aes(ep400_cluster, variable, fill=value)) + geom_tile() + 
   scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(5, "RdBu"), bias=1)(56))) +
   theme(axis.text.x = element_text(size=10, angle=45))
