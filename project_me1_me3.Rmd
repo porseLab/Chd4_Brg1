@@ -1552,11 +1552,6 @@ df_nascent_ercc <- df_nascent_ercc[which(df_nascent_ercc$name %in% c("ERCC-00043
 mat_nascent_ercc <- df_nascent_ercc[,c(-1)]
 row.names(mat_nascent_ercc) <- df_nascent_ercc$name
 colnames(mat_nascent_ercc) <- colnames(mat_nascent)
-
-df_nascent_dm6 <- read.table("~/bric_share/bp_nextgen/01_ALL_RNA-SEQ_RAW/CHD4_BRG1/map_trim_reads/GENE_EXPRESSION.MATRIX.dm6.wo_coor", header=T)
-mat_nascent_dm6 <- df_nascent_dm6[,c(-1)]
-row.names(mat_nascent_dm6) <- df_nascent_dm6$name
-colnames(mat_nascent_dm6) <- colnames(mat_nascent)
 ```
 ##################################################
 ## Nascent RNA-seq data analysis (spike-in - Brg1 - Volcano plots)
@@ -1571,11 +1566,6 @@ mat <- rbind(mat_nascent, mat_nascent_ercc[which(row.names(mat_nascent_ercc) %in
 mat <- mat[which(apply(mat[,c(1:2,5:6)], 1, function(x) length(x[x>=5])>=2)),c(1:2,5:6)]
 genes <- rownames(mat)[grep("^ERCC-", invert=TRUE, rownames(mat))]
 spikes <- rownames(mat)[grep("^ERCC-", rownames(mat))]
-
-# mat <- rbind(mat_nascent, mat_nascent_dm6)
-# mat <- mat[which(apply(mat[,c(1:4,8:10)], 1, function(x) length(x[x>=5])>=2)),c(1:4,8:10)]
-# genes <- rownames(mat)[grep("^FBgn", invert=TRUE, rownames(mat))]
-# spikes <- rownames(mat)[grep("^FBgn", rownames(mat))]
 
 #create EDASeq Object
 x <- as.factor(c(rep("KO", 2), rep("Ctrl", 2)))
