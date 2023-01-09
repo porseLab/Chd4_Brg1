@@ -275,59 +275,9 @@ write.table(df_mef[order(df_mef$X.chr, df_mef$start, df_mef$end),],
 
 ##################################################
 #### ANALYSIS SHOWING THE ROLE OF POL2 AND PRC2 IN EXPLAINING THE ANATAGONISTIC FUNCTION OF CHD4 AND BRG1
+#### CODE TO REPRODUCE FIGURES: Supplementary Figure 1A, 1D, Figure 1D and Supplementary Figure 3F
 ##################################################
 ```{r}
-##----------------------------------------------------##
-## volcano plot showing that Chd4 and Brg1 directionality do not explain anatagonistic function of Chd4 and Brg1
-##----------------------------------------------------##
-
-dev.off()
-pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/gene_expression_volcano.pdf", height=15, width=18)
-p1 <- lapply(which(colnames(df_esc) %in% c("brg1_fc","chd4_fc","chd6_fc","chd8_fc","ep400_fc","mll2_fc")), function(x) {
-  test <- df_esc[,c(x,x+1,x+3, which(colnames(df_esc) %in% c("promoter_activity", "promoter_class")))]
-  colnames(test)[c(1:3)] <- c("fc", "pVal", "class")
-  ggplot(test, aes(x=fc, y=-log10(pVal))) +
-    geom_point(aes(color = class), size=1.2) +
-    scale_color_manual(values = c("up"= "#a50026", "down"="#313695",  "neutral"= "gray")) +
-    facet_grid(.~promoter_activity + promoter_class) +
-    ggtitle(colnames(df_esc[x])) +
-    theme(legend.position="none") + theme_bw()
-})
-
-do.call(grid.arrange, c(p1))
-
-p2 <- lapply(which(colnames(df_esc) %in% c("brg1_fc","chd4_fc","chd6_fc","chd8_fc","ep400_fc","mll2_fc")), function(x) {
-  test <- df_esc[,c(x,x+1,x+3, which(colnames(df_esc) %in% c("promoter_activity", "ep400_cluster_merged")))]
-  colnames(test)[c(1:3)] <- c("fc", "pVal", "class")
-  ggplot(test, aes(x=fc, y=-log10(pVal))) +
-    geom_point(aes(color = class), size=1.2) +
-    scale_color_manual(values = c("up"= "#a50026", "down"="#313695",  "neutral"= "gray")) +
-    facet_grid(.~promoter_activity + ep400_cluster_merged) +
-    ggtitle(colnames(df_esc[x])) +
-    theme(legend.position="none") + theme_bw()
-})
-
-do.call(grid.arrange, c(p2))
-dev.off()
-
-##----------------------------------------------------##
-## expression of genes from the four classes during differentiation
-##----------------------------------------------------##
-
-df.melt <- melt(df_esc[,c("expr_mef", "expr_mef48", "expr_ipsc", "expr_esc", "ep400_cluster_merged")])
-df.melt$variableNumeric <- as.numeric(df.melt$variable)
-df.melt$value <- df.melt$value
-df.melt <- summarySE(df.melt[!is.na(df.melt$value),], measurevar = "value", groupvars = c("ep400_cluster_merged", "variable"))
-
-p1 <- ggplot(df.melt, aes(variable, value, color=ep400_cluster_merged)) +  geom_errorbar(aes(ymin=value-se, ymax=value+se), width=.1, alpha=1) +
-  geom_line(aes(group=factor(ep400_cluster_merged), color=factor(ep400_cluster_merged)), alpha=1) +
-  geom_point(shape = 21, size = 2, fill="white") +
-  #scale_color_manual(values=c("#313695", "#000000", "#a50026")) +
-  theme_bw() +  theme(legend.position="top") +
-  geom_smooth(method = "lm", formula = y ~ poly(x, 4), se = F)
-  #facet_wrap(~ep400_cluster_merged, scales="free")
-ggsave(p1, dpi=300, filename="~/project/chip-seq-analysis/analysis_chd4_brg1//pdf/gene_expression_differentiation.pdf", useDingbats=FALSE)
-
 ##----------------------------------------------------##
 ## volcano plot analysis
 ##----------------------------------------------------##
@@ -471,6 +421,7 @@ dev.off()
 
 ##################################################
 #### Validation of gene expression changes with independent datasets
+#### CODE TO REPRODUCE FIGURES: Supplementary Figure 1H
 ##################################################
 ```{r}
 ##----------------------------------------------------##
@@ -571,6 +522,7 @@ ggscatter(test.melt, x = "log2FoldChange_brg1.median", y = "log2FoldChange_mbd3.
 
 ##################################################
 #### CHD4 AND BRG1 BINDING FOLD CHANGE AND POL2 PAUSING ANALYSIS (ESC)
+#### CODE TO REPRODUCE FIGURES: Figure 3C and 3F
 ##################################################
 ```{r}
 test <- df_esc
@@ -672,6 +624,7 @@ dev.off()
 
 ##################################################
 #### Relationship between H2A.Z, H3.3 and Pol2 pausing (ESC)
+#### CODE TO REPRODUCE FIGURES: Figure 6B and Supplementary Figure 7A
 ##################################################
 ```{r}
 ##----------------------------------------------------##
@@ -728,6 +681,7 @@ dev.off()
 
 ##################################################
 #### Relationship between H2A.Z, H3.3 and Pol2 pausing (MEF)
+#### CODE TO REPRODUCE FIGURES: Figure 6C and Supplementary Figure 7B
 ##################################################
 ```{r}
 ##----------------------------------------------------##
@@ -787,6 +741,7 @@ dev.off()
 
 ##################################################
 #### CHD4 AND BRG1 BINDING RATIO ANALYSIS (ESC)
+#### CODE TO REPRODUCE FIGURES: Figure 3G, Supplementary Figure 4A, Figure 6A
 ##################################################
 ```{r}
 test <- df_esc
@@ -887,6 +842,7 @@ ggsave(g, dpi=300, height=25, width=20, filename="~/project/chip-seq-analysis/an
 
 ##################################################
 #### CHD4 AND BRG1 BINDING RATIO ANALYSIS (MEF)
+#### CODE TO REPRODUCE FIGURES: Supplementary Figure 4B, Supplementary Figure 6A, Supplementary Figure 5E
 ##################################################
 ```{r}
 test <- df_mef
@@ -962,6 +918,7 @@ ggsave(g, dpi=300, height=25, width=20, filename="~/project/chip-seq-analysis/an
 
 ##################################################
 #### CHD4 AND BRG1 BINDING FOLD CHANGE AND POL2 PAUSING ANALYSIS (ESC vs MEF)
+#### CODE TO REPRODUCE FIGURES: Supplementary Figure 4C, Supplementary Figure 5G
 ##################################################
 ```{r}
 test <- merge(df_esc[,c("name", "chd4_esc_Rep1", "brg1_esc_Rep1", "ezh2_esc_Rep1", "h3k27me3_esc_Rep1", "expr_esc",
@@ -1104,6 +1061,7 @@ dev.off()
 
 ##################################################
 #### Gehre et al. 2020 (H3.3 knock out) & Subramanian et al. 2013 (H2A.Z knock out)
+#### CODE TO REPRODUCE FIGURES: Figure 6G
 ##################################################
 ```{r}
 gehre <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/external_data/gehre_2020/gene_de.matrix", header=T)
@@ -1151,6 +1109,7 @@ dev.off()
 
 ##################################################
 #### revision (Pol II ChIP-seq data analysis - brg1)
+#### CODE TO REPRODUCE FIGURES: Figure 4A, Supplementary Figure 6E, 6F
 ##################################################
 ```{r}
 ## Pol II ser5p
@@ -1244,6 +1203,7 @@ dev.off()
 
 ##################################################
 #### revision (Pol II ChIP-seq data analysis - chd4)
+#### CODE TO REPRODUCE FIGURES: Figure 5A, Supplementary Figure 6G, 6H
 ##################################################
 ```{r}
 ## Pol II ser5p
@@ -1322,7 +1282,8 @@ dev.off()
 ```
 
 ##################################################
-## histone variants edgeR analysis
+#### histone variants edgeR analysis
+#### CODE TO REPRODUCE FIGURES: Figure 6E, 6F, Supplementary Figure 7F, 7G
 ##################################################
 ```{r}
 ## Chd4
@@ -1402,14 +1363,16 @@ dev.off()
 ```
 
 ##################################################
-## Nascent RNA-seq data analysis (load data)
+#### Nascent RNA-seq data analysis (load data)
 ##################################################
 ```{r}
+## load raw read counts mapping to mouse genes (mm10)
 df_nascent <- read.table("~/bric_share/bp_nextgen/01_ALL_RNA-SEQ_RAW/CHD4_BRG1/map_trim_reads/GENE_EXPRESSION.MATRIX.wo_coor", header=T)
 mat_nascent <- df_nascent[,c(-1)]
 row.names(mat_nascent) <- df_nascent$name
 # ggarrange(matrix2Heatmap(cor(mat_nascent, method="spearman"), displayN = T, clusterRows = T, clusterCols = T))
 
+## load raw read counts mapping to ERCC controls
 df_nascent_ercc <- read.table("~/bric_share/bp_nextgen/01_ALL_RNA-SEQ_RAW/CHD4_BRG1/map_trim_reads/GENE_EXPRESSION.MATRIX.ercc.wo_coor", header=T)
 df_nascent_ercc <- df_nascent_ercc[which(df_nascent_ercc$name %in% c("ERCC-00043", "ERCC-00170", "ERCC-00136", "ERCC-00145", "ERCC-00092", "ERCC-00002")),]
 mat_nascent_ercc <- df_nascent_ercc[,c(-1)]
@@ -1418,47 +1381,50 @@ colnames(mat_nascent_ercc) <- colnames(mat_nascent)
 ```
 
 ##################################################
-## Nascent RNA-seq data analysis (spike-in - Brg1 - Volcano plots)
+#### Nascent RNA-seq data analysis (spike-in - Brg1 - Volcano plots)
+#### CODE TO REPRODUCE FIGURES: Supplementary Figure 1B, 1C, 1G, Figure 4D (barplot)
 ##################################################
 ```{r}
 library("EDASeq")
 library("RUVSeq")
 library("edgeR")
 
-#filter genes with less than 5 reads in at least 2 samples
+# organize matrix containing raw read counts mapping to mouse genes and ERCC controls
+# filter genes with less than 5 reads in at least 2 samples
 mat <- rbind(mat_nascent, mat_nascent_ercc[which(row.names(mat_nascent_ercc) %in% c("ERCC-00043", "ERCC-00136", "ERCC-00092")),])
 mat <- mat[which(apply(mat[,c(1:2,5:6)], 1, function(x) length(x[x>=5])>=2)),c(1:2,5:6)]
 genes <- rownames(mat)[grep("^ERCC-", invert=TRUE, rownames(mat))]
 spikes <- rownames(mat)[grep("^ERCC-", rownames(mat))]
 
-#create EDASeq Object
+# create EDASeq Object
 x <- as.factor(c(rep("KO", 2), rep("Ctrl", 2)))
 set <- newSeqExpressionSet(as.matrix(mat), phenoData = data.frame(x, row.names=colnames(mat)))
 
-#boxplots of relative log expression and PCE before between-sample normaliztion
+# boxplots of relative log expression and PCE before between-sample normaliztion
 library(RColorBrewer)
 colors <- brewer.pal(3, "Set2")
 plotRLE(set, outline=FALSE, ylim=c(-4,4), col=colors[x])
 plotPCA(set, col=colors[x], cex=1.2)
 
-#normalize the data with EDASeq
+# between lane normalization using EDASeq
 set <- betweenLaneNormalization(set, which = "upper")
 plotRLE(set, outline=FALSE, ylim=c(-4,4), col=colors[x])
 plotPCA(set, col=colors[x], cex=1.2)
 
-#Estimating factors of unwanted variation using spike-ins
+# spike-in normalization (estimating factors of unwanted variation (technical variation) using ERCC spike-ins)
 set1 <- RUVg(set, spikes, k=1)
 pData(set1)
 plotRLE(set1, outline=FALSE, ylim=c(-4,4), col=colors[x])
 plotPCA(set1, col=colors[x], cex=1.2, lty=1)
 
-#DGE with edgeR
+# use weight factors (W_1) computed using ERCC spike-in to normalize raw read counts 
 design <- model.matrix(~x + W_1, data = pData(set1))
 y <- DGEList(counts=counts(set1), group=x)
+
+# identify differentially expressed genes using edgeR
 y <- calcNormFactors(y, method="upperquartile")
 y <- estimateGLMCommonDisp(y, design)
 y <- estimateGLMTagwiseDisp(y, design)
-
 fit <- glmFit(y, design)
 lrt <- glmLRT(fit, coef=2)
 plotMD(lrt, ylab = "log2 Fold Change", main = "4sU-seq: Ctrl vs BRM014", adjust.method = "BH", p.value = 0.05, cex = 0.5, hl.col=c("green3","red"))
@@ -1479,20 +1445,29 @@ write.table(res_brg1,
             "~/bric_share/bp_nextgen/01_ALL_RNA-SEQ_RAW/CHD4_BRG1/map_trim_reads/GENE_EXPRESSION.MATRIX.DE_BRG1", quote = F, sep="\t",
             row.names=T, col.names = T)
 
-normcounts_brg1[grep("^Cdk1$|^Ercc6l$|^Fam107b$|^Ets1$", normcounts_brg1$Row.names),]
-dirk_data_analyzed[grep("^Cdk1$|^Ercc6l$|^Fam107b$|^Ets1$", dirk_data_analyzed$SYMBOL),c("SYMBOL", "log2FoldChange", "class")]
+## plot barplot showing changes in Cdk1 expression
+normcounts_brg1[grep("^Cdk1$", normcounts_brg1$Row.names),]
+dirk_data_analyzed[grep("^Cdk1$", dirk_data_analyzed$SYMBOL),c("SYMBOL", "log2FoldChange", "class")]
 
-df.melt <- melt(normcounts_brg1[grep("^Cdk1$|^Ercc6l$|^Fam107b$|^Ets1$", normcounts_brg1$Row.names),][1,c(2:5)])
+df.melt <- melt(normcounts_brg1[grep("^Cdk1$", normcounts_brg1$Row.names),][1,c(2:5)])
 df.melt$variable <- gsub("_r.*", "", as.character(df.melt$variable))
 df.melt$variable <- factor(df.melt$variable, levels=c("DMSO", "BRM014"), ordered=T)
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/cdk1_nascentRNA_brg1.pdf")
-ggbarplot(df.melt, x = "variable", y = "value",
- add = "mean_se", label = TRUE) + xlab("") + ylab("Gene expr. (Cdk1)")
+ggbarplot(df.melt, x = "variable", y = "value", add = "mean_se", label = TRUE) + xlab("") + ylab("Gene expr. (Cdk1)")
 dev.off()
 
 ##----------------------------------------------------##
-## volcano plot analysis
+## volcano plot analysis (Supplementary Figure 1B, 1C and 1G)
 ##----------------------------------------------------##
+
+test_brg1 <- merge(res_brg1, df_esc, by.x="row.names", by.y="name")
+test_brg1$ep400_cluster_merged <- factor(test_brg1$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"),
+                                    ordered=T)
+test_brg1$brg1_class_spikeIn <- "0"
+test_brg1[which(test_brg1$logFC > 0.41),]$brg1_class_spikeIn <- as.character(cut2(test_brg1[which(test_brg1$logFC > 0.41),]$logFC, g=3))
+test_brg1[which(test_brg1$logFC < -0.41),]$brg1_class_spikeIn <- as.character(cut2(test_brg1[which(test_brg1$logFC < -0.41),]$logFC, g=3))
+test_brg1$brg1_class_spikeIn <- as.factor(as.numeric(gsub("]", "", gsub("[)]+", "", gsub("^.*,", "", test_brg1$brg1_class_spikeIn)))))
+table(test_brg1$brg1_class_spikeIn)
 
 p1 <- ggplot(test_brg1, aes(x=logFC, y=-log10(FDR))) +
   geom_point(aes(colour = logFC, fill = logFC), shape = 21, size = 3, stroke = 1) +
@@ -1544,48 +1519,51 @@ dev.off()
 ```
 
 ##################################################
-## Nascent RNA-seq data analysis (spike-in - Chd4 - Volcano plots)
+#### Nascent RNA-seq data analysis (spike-in - Chd4 - Volcano plots)
+#### CODE TO REPRODUCE FIGURES: Supplementary Figure 1E, 1F and 1G, Figure 5D (barplot)
 ##################################################
 ```{r}
 library("EDASeq")
 library("RUVSeq")
 library("edgeR")
 
-#filter genes with less than 5 reads in at least 2 samples
+# organize matrix containing raw read counts mapping to mouse genes and ERCC controls
+# filter genes with less than 5 reads in at least 2 samples
 mat <- rbind(mat_nascent, mat_nascent_ercc[which(row.names(mat_nascent_ercc) %in% c("ERCC-00043", "ERCC-00136", "ERCC-00092")),])
 mat <- mat[which(apply(mat[,c(3,4,7,8)], 1, function(x) length(x[x>=5])>=2)),c(3,4,7,8)]
 genes <- rownames(mat)[grep("^ERCC-", invert=TRUE, rownames(mat))]
 spikes <- rownames(mat)[grep("^ERCC-", rownames(mat))]
 
-#create EDASeq Object
+# create EDASeq Object
 x <- as.factor(c(rep("KO", 2), rep("Ctrl", 2)))
 set <- newSeqExpressionSet(as.matrix(mat), phenoData = data.frame(x, row.names=colnames(mat)))
 
-#boxplots of relative log expression and PCE before between-sample normaliztion
+# boxplots of relative log expression and PCE before between-sample normaliztion
 library(RColorBrewer)
 colors <- brewer.pal(3, "Set2")
 plotRLE(set, outline=FALSE, ylim=c(-4,4), col=colors[x])
 plotPCA(set, col=colors[x], cex=1.2)
 
-#normalize the data with EDASeq
+# between lane normalization using EDASeq
 set <- betweenLaneNormalization(set, which = "upper")
 plotRLE(set, outline=FALSE, ylim=c(-4,4), col=colors[x])
 plotPCA(set, col=colors[x], cex=1.2)
 
-#Estimating factors of unwanted variation using spike-ins
+# spike-in normalization (estimating factors of unwanted variation (technical variation) using ERCC spike-ins)
 set1 <- RUVg(set, spikes, k=1)
 pData(set1)
 plotRLE(set1, outline=FALSE, ylim=c(-4,4), col=colors[x])
 plotPCA(set1, col=colors[x], cex=1.2, lty=1)
 ggarrange(matrix2Heatmap(cor(counts(set1)), clusterRows = T, clusterCols = T))
 
-#DGE with edgeR
+# use weight factors (W_1) computed using ERCC spike-in to normalize raw read counts 
 design <- model.matrix(~x + W_1, data = pData(set1))
 y <- DGEList(counts=counts(set1), group=x)
+
+# identify differentially expressed genes using edgeR
 y <- calcNormFactors(y, method="upperquartile")
 y <- estimateGLMCommonDisp(y, design)
 y <- estimateGLMTagwiseDisp(y, design)
-
 fit <- glmFit(y, design)
 lrt <- glmLRT(fit, coef=2)
 plotMD(lrt, ylab = "log2 Fold Change", main = "4sU-seq: Ctrl vs BRM014", adjust.method = "BH", p.value = 0.05, cex = 0.5, hl.col=c("green3","red"))
@@ -1606,8 +1584,9 @@ write.table(res_chd4,
             "~/bric_share/bp_nextgen/01_ALL_RNA-SEQ_RAW/CHD4_BRG1/map_trim_reads/GENE_EXPRESSION.MATRIX.DE_CHD4.1", quote = F, sep="\t",
             row.names=T, col.names = T)
 
-normcounts_chd4[grep("^Cdk1$|^Ercc6l$|^Fam107b$|^Ets1$", normcounts_chd4$Row.names),]
-df.melt <- melt(normcounts_chd4[grep("^Cdk1$|^Ercc6l$|^Fam107b$|^Ets1$", normcounts_chd4$Row.names),][1,c(2:5)])
+## plot barplot showing changes in Cdk1 expression
+normcounts_chd4[grep("^Cdk1$", normcounts_chd4$Row.names),]
+df.melt <- melt(normcounts_chd4[grep("^Cdk1$", normcounts_chd4$Row.names),][1,c(2:5)])
 df.melt$variable <- gsub("_r.*", "", as.character(df.melt$variable))
 df.melt$variable <- factor(df.melt$variable, levels=c("ScrambleShRNA", "Chd4ShRNA"), ordered=T)
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/cdk1_nascentRNA_chd4.pdf")
@@ -1616,8 +1595,17 @@ ggbarplot(df.melt, x = "variable", y = "value",
 dev.off()
 
 ##----------------------------------------------------##
-## volcano plot analysis
+## volcano plot analysis (Supplementary Figure 1E, 1F and 1G)
 ##----------------------------------------------------##
+
+test_chd4 <- merge(res_chd4, df_esc, by.x="row.names", by.y="name")
+test_chd4$ep400_cluster_merged <- factor(test_chd4$ep400_cluster_merged, levels=c("bivalent", "low", "average", "high"),
+                                    ordered=T)
+test_chd4$chd4_class_spikeIn <- "0"
+test_chd4[which(test_chd4$logFC > 1.2),]$chd4_class_spikeIn <- as.character(cut2(test_chd4[which(test_chd4$logFC > 1.2),]$logFC, g=3))
+test_chd4[which(test_chd4$logFC < -1.2),]$chd4_class_spikeIn <- as.character(cut2(test_chd4[which(test_chd4$logFC < -1.2),]$logFC, g=3))
+test_chd4$chd4_class_spikeIn <- as.factor(as.numeric(gsub("]", "", gsub("[)]+", "", gsub("^.*,", "", test_chd4$chd4_class_spikeIn)))))
+table(test_chd4$chd4_class_spikeIn)
 
 p1 <- ggplot(test_chd4, aes(x=logFC, y=-log10(FDR))) +
   geom_point(aes(colour = logFC, fill = logFC), shape = 21, size = 3, stroke = 1) +
@@ -1667,7 +1655,8 @@ cor.test(test.melt$logFC.x.median, test.melt$logFC.y.median, method="spearman")
 ```
 
 ##################################################
-## Nascent RNA-seq data analysis (spike-in - Brg1 and Chd4 - heatmaps)
+#### Nascent RNA-seq data analysis (spike-in - Brg1 and Chd4 - heatmaps)
+#### CODE TO REPRODUCE FIGURES: Supplementary Figure 1D, Figure 4A, Figure 5A
 ##################################################
 ```{r}
 ## Figure 1 (Changes in nascent RNA-seq levels)
