@@ -1114,15 +1114,7 @@ dev.off()
 ```{r}
 ## Pol II ser5p
 file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser5p.deepToolsMatrix.gz"
-# file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/test/pol2_ser2p_choudhary.deepToolsMatrix.gz"
 df <- read.table(pipe(sprintf("zgrep -v '@' %s", file)))
-
-df_dirk <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/promoters_esc_dirk.bed")
-table(df_dirk$V14)
-df$class <- "neutral"
-df[df$V4 %in% df_dirk[which(df_dirk$V14=="down"),]$V4,]$class <- "down"
-df[df$V4 %in% df_dirk[which(df_dirk$V14=="up"),]$V4,]$class <- "up"
-table(df$class)
 
 mat <- (df[,-c(1:6)])
 library("jsonlite")
@@ -1143,10 +1135,9 @@ mat2 <- mat.lst[[2]]
 colnames(mat2) <- seq(1,ncol(mat2))
 
 reformatMat <- as.data.frame(mat1-mat2)
-reformatMat$class <- mat$class
 
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser5p_heatmap.pdf")
-Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-500, -200, 0, 200, 500), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
+Heatmap(reformatMat, col = circlize::colorRamp2(c(-500, -200, 0, 200, 500), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
 
@@ -1154,13 +1145,6 @@ dev.off()
 file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser2p.deepToolsMatrix.gz"
 df <- read.table(pipe(sprintf("zgrep -v '@' %s", file)))
 
-df_dirk <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/promoters_esc_dirk.bed")
-table(df_dirk$V14)
-df$class <- "neutral"
-df[df$V4 %in% df_dirk[which(df_dirk$V14=="down"),]$V4,]$class <- "down"
-df[df$V4 %in% df_dirk[which(df_dirk$V14=="up"),]$V4,]$class <- "up"
-table(df$class)
-
 mat <- (df[,-c(1:6)])
 library("jsonlite")
 h <- scan(file, n=1, sep="\n", what=character())
@@ -1180,14 +1164,11 @@ mat2 <- mat.lst[[2]]
 colnames(mat2) <- seq(1,ncol(mat2))
 
 reformatMat <- as.data.frame(mat1-mat2)
-reformatMat$class <- mat$class
+
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/brg1/pol2_ser2p_heatmap.pdf")
-Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-20, -10, 0, 10, 20), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
+Heatmap(reformatMat, col = circlize::colorRamp2(c(-20, -10, 0, 10, 20), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
-
-barplot(as.matrix(reformatMat[grep("^Cdk1$", df$V4), c(-201)])) ## Cdk1
-barplot(as.matrix(reformatMat[grep("^Ercc6l$", df$V4), c(-201)])) ## Ercc6l
 
 ## PCA plots
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/pca_brg1.pdf")
@@ -1208,7 +1189,6 @@ dev.off()
 ```{r}
 ## Pol II ser5p
 file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/chd4/pol2_ser5p.deepToolsMatrix.gz"
-# file <- "~/project/chip-seq-analysis/analysis_chd4_brg1/test/pol2_ser2p_choudhary.deepToolsMatrix.gz"
 df <- read.table(pipe(sprintf("zgrep -v '@' %s", file)))
 
 mat <- (df[,-c(1:6)])
@@ -1230,10 +1210,9 @@ mat2 <- mat.lst[[2]]
 colnames(mat2) <- seq(1,ncol(mat2))
 
 reformatMat <- as.data.frame(mat1-mat2)
-reformatMat$class <- mat$class
 
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/chd4/pol2_ser5p_heatmap.pdf")
-Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-2000, -1000, 0, 1000, 2000), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
+Heatmap(reformatMat, col = circlize::colorRamp2(c(-2000, -1000, 0, 1000, 2000), c("#2166ac", "#4393c3", "white", "#d6604d", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
 
@@ -1262,12 +1241,9 @@ colnames(mat2) <- seq(1,ncol(mat2))
 reformatMat <- as.data.frame(mat1-mat2)
 
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/deepPlot/chd4/pol2_ser2p_heatmap.pdf")
-Heatmap(reformatMat[,c(-ncol(reformatMat))], col = circlize::colorRamp2(c(-20, -10, 0, 300, 400), c("#2166ac", "white", "white", "white", "#b2182b")),
+Heatmap(reformatMat, col = circlize::colorRamp2(c(-20, -10, 0, 300, 400), c("#2166ac", "white", "white", "white", "#b2182b")),
         cluster_rows=F, cluster_columns=F)
 dev.off()
-
-barplot(as.matrix(reformatMat[grep("^Cdk1$", df$V4), c(-201)])) ## Cdk1
-barplot(as.matrix(reformatMat[grep("^Ercc6l$", df$V4), c(-201)])) ## Ercc6l
 
 ## PCA plots
 pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/pca_chd4.pdf")
