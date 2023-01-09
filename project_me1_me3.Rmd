@@ -41,34 +41,6 @@ library(Vennerable)
 theme_set(theme_classic2())
 source("~/software/myScripts/R-scripts/FUNCTIONS.R")
 ```
-##################################################
-#### ATAC-seq data analysis (using replicates)
-##################################################
-```{r}
-bed_df <- read.table(pipe("cut -f 1-6 ~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_esc_all.bed"), header=F, comment.char = "")
-colnames(bed_df) <- c("chr", "start", "end", "name", "score", "strand")
-
-atac_brg1 <- bam2counts(bed_df, list.files("~/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/map_replicates/", pattern = "brg1_kd.*bam$", full.names=T))
-atac_chd4 <- bam2counts(bed_df, list.files("~/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/map_replicates/", pattern = "chd4_kd.*bam$", full.names=T))
-atac_wt <- bam2counts(bed_df, list.files("~/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/map_replicates/", pattern = "esc_wt.*bam$", full.names=T))
-
-mat <- cbind(atac_brg1, atac_wt)
-res.brg1 <- matrix2deseq2(mat, "ko,ko,ko,ko,wt,wt,wt,wt")
-table(res.brg1$class)
-res.brg1[which(res.brg1$gene %in% c("Cdk1", "Ercc6l", "Fam107b", "Ets1")),]
-# ggplot(res.brg1, aes(baseMean, log2FoldChange, color=class, label=gene)) + geom_point() + theme_bw() +
-#   geom_text(data=res.brg1[which(res.brg1$gene=="Cdk1"),], aes(baseMean, log2FoldChange, label=gene, color="red"))
-
-mat <- cbind(atac_chd4, atac_wt)
-res.chd4 <- matrix2deseq2(mat, "ko,ko,ko,ko,wt,wt,wt,wt")
-table(res.chd4$class)
-ggplot(res.chd4, aes(baseMean, log2FoldChange, color=class, label=gene)) + geom_point() + theme_bw()
-res.chd4[which(res.brg1$gene %in% c("Cdk1", "Ercc6l", "Fam107b", "Ets1")),]
-
-par(mfrow=c(2,1))
-hist(res.brg1$log2FoldChange)
-hist(res.chd4$log2FoldChange)
-```
 
 ##################################################
 #### LOAD OR CREATE FILES
@@ -78,7 +50,7 @@ hist(res.chd4$log2FoldChange)
 ## Load gene promoter file (esc)
 ##----------------------------------------------------##
 
-df_esc <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_esc/GENES_PROMOTER.BED.annotation.tpm1", header=T, comment.char = "") 
+df_esc <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_esc/GENES_PROMOTER.BED.annotation.tpm", header=T, comment.char = "") 
 dim(df_esc) # N=21826
 
 df_expr <- read.table("~/bric_share/bp_nextgen/09_ALL_PUBLIC/rna-seq/mouse/mef_esc_reprogramming/mmc2.txt", header=T, comment.char = "")
@@ -288,10 +260,16 @@ table(df_mef$ratio_chd4_brg1_class)
 
 ##################################################
 #### WRITE MATRIX TO FILE
+#### THESE (promoters_esc.bed and promoters_mef.bed) ARE THE MAIN DATA FILES USED FOR THE ANALYSIS
+#### USERS CAN LOAD THESE FILES TO REPRODUCE THE ANALYSIS
 ##################################################
 ```{r}
 write.table(df_esc[order(df_esc$X.chr, df_esc$start, df_esc$end),], 
             "~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_esc.bed", quote = F, sep="\t",
+            row.names=F, col.names = T)
+
+write.table(df_mef[order(df_mef$X.chr, df_mef$start, df_mef$end),], 
+            "~/project/chip-seq-analysis/analysis_chd4_brg1/analysis/promoters_mef.bed", quote = F, sep="\t",
             row.names=F, col.names = T)
 ```
 
@@ -488,13 +466,6 @@ test.melt <- summaryBy(chd4_fc +  mbd3_fc ~ ep400_cluster, data = test, FUN = li
 smoothScatter(test.melt$chd4_fc.median, test.melt$mbd3_fc.median, colramp=colorRampPalette(my.cols), pch=19, cex=.8, useRaster=T, xlab = "chd4 (logFC)", ylab = "mbd3 (logFC)")
 lines(lowess(test.melt$chd4_fc.median, test.melt$mbd3_fc.median),col='red', lty="dashed")
 cor.test(test.melt$chd4_fc.median, test.melt$mbd3_fc.median, method="spearman")
-
-test$atac_fc_brg1KD <- log(test$atac_esc_brg1_kd/test$atac_esc_wt)
-test$atac_fc_chd4KD <- log(test$atac_esc_chd4_kd/test$atac_esc_wt)
-test.melt <- summaryBy(atac_fc_brg1KD +  atac_fc_chd4KD ~ ep400_cluster, data = test, FUN = list(median))
-smoothScatter(test.melt$atac_fc_chd4KD.median, test.melt$atac_fc_brg1KD.median, colramp=colorRampPalette(my.cols), pch=19, cex=.8, useRaster=T, xlab = "ATAC (Chd4 KD logFC)", ylab = "ATAC (Brg1 KD logFC)")
-lines(lowess(test.melt$atac_fc_chd4KD.median, test.melt$atac_fc_brg1KD.median),col='red', lty="dashed")
-cor(test.melt$atac_fc_chd4KD.median, test.melt$atac_fc_brg1KD.median, method="spearman")
 dev.off()
 ```
 
@@ -698,6 +669,7 @@ g1
 g2
 dev.off()
 ```
+
 ##################################################
 #### Relationship between H2A.Z, H3.3 and Pol2 pausing (ESC)
 ##################################################
@@ -753,6 +725,7 @@ ggarrange(p1, p2, p3, p4, ncol=2, nrow=2)
 
 dev.off()
 ```
+
 ##################################################
 #### Relationship between H2A.Z, H3.3 and Pol2 pausing (MEF)
 ##################################################
@@ -811,6 +784,7 @@ ggarrange(p1, p2, p3, p4, ncol=2, nrow=2)
 
 dev.off()
 ```
+
 ##################################################
 #### CHD4 AND BRG1 BINDING RATIO ANALYSIS (ESC)
 ##################################################
@@ -910,6 +884,7 @@ g <- arrangeGrob(p1, p2, p3, p4, p5, p6, p7, nrow = 7, ncol=1)
 ggsave(g, dpi=300, height=25, width=20, filename="~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/chd4_brg1_pol2_esc.pdf", useDingbats=FALSE)
 
 ```
+
 ##################################################
 #### CHD4 AND BRG1 BINDING RATIO ANALYSIS (MEF)
 ##################################################
@@ -984,6 +959,7 @@ g <- arrangeGrob(p1, p2, p3, p4, p5, nrow = 5, ncol=1)
 ggsave(g, dpi=300, height=25, width=20, filename="~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/chd4_brg1_pol2_mef.pdf", useDingbats=FALSE)
 
 ```
+
 ##################################################
 #### CHD4 AND BRG1 BINDING FOLD CHANGE AND POL2 PAUSING ANALYSIS (ESC vs MEF)
 ##################################################
@@ -1125,6 +1101,7 @@ barplot(table(test[which(test$gene_specificity=="mef"),]$ratio_class)/table(test
 barplot(table(test[which(test$gene_specificity=="esc"),]$ratio_class)/table(test$ratio_class), ylim=c(0,0.06), main="ESC-specific", las=2)
 dev.off()
 ```
+
 ##################################################
 #### Gehre et al. 2020 (H3.3 knock out) & Subramanian et al. 2013 (H2A.Z knock out)
 ##################################################
@@ -1169,119 +1146,6 @@ ggplot(df.melt, aes(ep400_cluster, variable, fill=value)) + geom_tile() +
   scale_fill_gradientn(colours = rev(colorRampPalette(brewer.pal(5, "RdBu"), bias=1.2)(56))) +
   theme(axis.text.x = element_text(size=10, angle=45)) + theme_bw() +
   coord_flip()
-dev.off()
-```
-##################################################
-#### GVIZ PLOTS
-##################################################
-```{r}
-browser_files <- read.table("~/project/chip-seq-analysis/analysis_chd4_brg1/FILES_FOR_GENOME_BROWSER")
-
-pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/GVIZ_general.pdf")
-## Cdk1
-plot_gviz_track(GEN = "mm10", COOR = "chr10:69331634-69357938",
-                BAMFILE = browser_files[c(3,4,1,2,11,8,6,5,7,12,13,15),],
-                type="a", cex=0.5, FLANK_WIN = 0, maxlimit = "12,10,12,80,80,250,50,25,15,6,6,6")
-
-plot_gviz_track(GEN = "mm9", COOR = "chr10:68794382-68820686",
-                BAMFILE = c("/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/chd4_atac_subtract.bw",
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/brg1_atac_subtract.bw"),
-                type="a", cex=0.5, FLANK_WIN = 0)
-
-plot_gviz_track(GEN = "mm10", COOR = df_esc$gene_coor[grep("^Cdk1$", df_esc$name)],
-                BAMFILE = c(browser_files[c(3,1),],
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/chip-seq/mouse/mef_esc_reprogramming/mbd3_kd/bigWig_customNorm/pol2_mbd3_subtract.bw",
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/chip-seq/mouse/mef_esc_reprogramming/brg1_ko/authors_defined/pol2_brg1_subtract.bw"),
-                type="h", cex=0.5, FLANK_WIN = 500)
-
-## Ercc6l
-plot_gviz_track(GEN = "mm10", COOR = "chrX:102131715-102167091",
-                BAMFILE = browser_files[c(3,4,1,2,11,8,6,5,7,12,13,15),],
-                type="a", cex=0.5, FLANK_WIN = 0, maxlimit = "12,10,12,80,80,250,50,25,15,6,6,6")
-
-plot_gviz_track(GEN = "mm9", COOR = "chrX:99327054-99362430",
-                BAMFILE = c("/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/chd4_atac_subtract.bw",
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/brg1_atac_subtract.bw"),
-                type="a", cex=0.5, FLANK_WIN = 0)
-
-## Fam107b
-plot_gviz_track(GEN = "mm10", COOR = "chr2:3703477-3792142",
-                BAMFILE = browser_files[c(3,4,1,2,11,8,6,5,7,12,13,15),],
-                type="a", cex=0.5, FLANK_WIN = 0, maxlimit = "12,10,12,80,80,250,50,25,15,6,6,6")
-
-plot_gviz_track(GEN = "mm9", COOR = "chr2:3620749-3709414",
-                BAMFILE = c("/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/chd4_atac_subtract.bw",
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/brg1_atac_subtract.bw"),
-                type="a", cex=0.5, FLANK_WIN = 0)
-
-plot_gviz_track(GEN = "mm10", COOR = "chr2:3703477-3792142",
-                BAMFILE = c(browser_files[c(3,1),],
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/chip-seq/mouse/mef_esc_reprogramming/mbd3_kd/bigWig_customNorm/h3k27me3_mbd3_subtract_Rep1.bw",
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/chip-seq/mouse/mef_esc_reprogramming/brg1_ko/authors_defined/h3k27me3_brg1_subtract.bw"),
-                type="h", cex=0.5, FLANK_WIN = 0)
-
-## Ets1
-plot_gviz_track(GEN = "mm10", COOR = "chr9:32686041-32767820",
-                BAMFILE = browser_files[c(3,4,1,2,11,8,6,5,7,12,13,15),],
-                type="a", cex=0.5, FLANK_WIN = 0, maxlimit = "12,10,12,80,80,250,50,25,15,6,6,6")
-
-plot_gviz_track(GEN = "mm9", COOR = "chr9:32493626-32575405",
-                BAMFILE = c("/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/chd4_atac_subtract.bw",
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/atac-seq/mouse/mef_esc_reprogramming/dieuleveult_2016/ratio/mm9/brg1_atac_subtract.bw"),
-                type="a", cex=0.5, FLANK_WIN = 0)
-
-plot_gviz_track(GEN = "mm10", COOR = "chr9:32686041-32767820",
-                BAMFILE = c(browser_files[c(3,1),],
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/chip-seq/mouse/mef_esc_reprogramming/mbd3_kd/bigWig_customNorm/h3k27me3_mbd3_subtract_Rep1.bw",
-                            "/localhome/bric/xfd783/bric_share/bp_nextgen/09_ALL_PUBLIC/chip-seq/mouse/mef_esc_reprogramming/brg1_ko/authors_defined/h3k27me3_brg1_subtract.bw"),
-                type="h", cex=0.5, FLANK_WIN = 0)
-dev.off()
-
-## Myc
-# plot_gviz_track(GEN = "mm10", COOR = df_esc$gene_coor[grep("^Myc$", df_esc$name)],
-#                 BAMFILE = browser_files[c(3,4,1,2,11,8,6,5,7,12,13,15),],
-#                 type="a", cex=0.5, FLANK_WIN = 5000, maxlimit = "12,10,12,80,80,250,50,25,15,6,6,6")
-```
-##################################################
-#### Pol II (Gviz data tracks - brg1)
-##################################################
-```{r}
-pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/GVIZ_brg1.pdf")
-BWFILE <- read.table(pipe("cat ~/project/chip-seq-analysis/analysis_chd4_brg1/BW.CONFIG | grep 'DMSO\\|BRM014' | grep normBySIF_COV"))
-## chr10:68798882-68816186 (full gene)
-plot_gviz_track(GEN = "mm10", COOR = "chr10:69343152-69353262",
-                BAMFILE = c(grep("ser5p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=20000)
-plot_gviz_track(GEN = "mm10", COOR = "chr10:69343152-69353262",
-                BAMFILE = c(grep("ser2p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=7000)
-## chrX:99336554-99352930 (full gene)
-plot_gviz_track(GEN = "mm10", COOR = "chrX:102145215-102157591",
-                BAMFILE = c(grep("ser5p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=8000)
-plot_gviz_track(GEN = "mm10", COOR = "chrX:102145215-102157591",
-                BAMFILE = c(grep("ser2p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=3000)
-dev.off()
-```
-##################################################
-#### Pol II (Gviz data tracks - chd4)
-##################################################
-```{r}
-pdf("~/project/chip-seq-analysis/analysis_chd4_brg1/pdf/GVIZ_chd4.pdf")
-BWFILE <- read.table(pipe("cat ~/project/chip-seq-analysis/analysis_chd4_brg1/BW.CONFIG | grep 'Chd4_shR\\|Scr_shR'"))
-plot_gviz_track(GEN = "mm10", COOR = "chr10:69343152-69353262",
-                BAMFILE = c(grep("Ser5p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=8000)
-plot_gviz_track(GEN = "mm10", COOR = "chr10:69343152-69353262",
-                BAMFILE = c(grep("Ser2p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=3000)
-plot_gviz_track(GEN = "mm9", COOR = "chrX:102145215-102157591",
-                BAMFILE = c(grep("Ser5p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=2500)
-plot_gviz_track(GEN = "mm9", COOR = "chrX:102145215-102157591",
-                BAMFILE = c(grep("Ser2p", BWFILE$V1, value = T)),
-                type="a", cex=0.5, FLANK_WIN = 1000, maxlimit=1500)
 dev.off()
 ```
 
@@ -1377,6 +1241,7 @@ plotCustomPCA(df[,c(8:13)], n = 6)
 ggarrange(matrix2Heatmap(cor(df[,c(8:13)], method="spearman"), col = "Reds", displayN = T, clusterRows = T, clusterCols = T))
 dev.off()
 ```
+
 ##################################################
 #### revision (Pol II ChIP-seq data analysis - chd4)
 ##################################################
@@ -1455,6 +1320,7 @@ plotCustomPCA(df[,c(8:13)], n = 6)
 ggarrange(matrix2Heatmap(cor(df[,c(8:13)], method="spearman"), col = "Reds", displayN = T, clusterRows = T, clusterCols = T))
 dev.off()
 ```
+
 ##################################################
 ## histone variants edgeR analysis
 ##################################################
@@ -1550,6 +1416,7 @@ mat_nascent_ercc <- df_nascent_ercc[,c(-1)]
 row.names(mat_nascent_ercc) <- df_nascent_ercc$name
 colnames(mat_nascent_ercc) <- colnames(mat_nascent)
 ```
+
 ##################################################
 ## Nascent RNA-seq data analysis (spike-in - Brg1 - Volcano plots)
 ##################################################
@@ -1675,6 +1542,7 @@ plotPCA(set1, col=colors[x], cex=1.2, lty=1)
 ggarrange(matrix2Heatmap(cor(counts(set1), method="spearman"), clusterRows = T, clusterCols = T, col = "Reds", displayN = T))
 dev.off()
 ```
+
 ##################################################
 ## Nascent RNA-seq data analysis (spike-in - Chd4 - Volcano plots)
 ##################################################
@@ -1797,6 +1665,7 @@ smoothScatter(test.melt$logFC.x.median, test.melt$logFC.y.median, colramp=colorR
 lines(lowess(test.melt$logFC.x.median, test.melt$logFC.y.median),col='red', lty="dashed")
 cor.test(test.melt$logFC.x.median, test.melt$logFC.y.median, method="spearman")
 ```
+
 ##################################################
 ## Nascent RNA-seq data analysis (spike-in - Brg1 and Chd4 - heatmaps)
 ##################################################
