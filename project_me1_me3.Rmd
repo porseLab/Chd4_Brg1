@@ -1632,7 +1632,7 @@ cor.test(test.melt$logFC.x.median, test.melt$logFC.y.median, method="spearman")
 
 ##################################################
 #### Nascent RNA-seq data analysis (spike-in - Brg1 and Chd4 - heatmaps)
-#### CODE TO REPRODUCE FIGURES: Supplementary Figure 1D, Figure 4A, Figure 5A
+#### CODE TO REPRODUCE FIGURES: Figure 1D, Figure 4A, Figure 5A
 ##################################################
 ```{r}
 ## Figure 1 (Changes in nascent RNA-seq levels)
